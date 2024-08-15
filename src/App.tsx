@@ -7,6 +7,7 @@ import ProtectedRoute from './providers/guards/ProtectedRoute'
 import AdminHome from './pages/admin/AdminHome'
 import SupervisorHome from './pages/supervisor/SupervisorHome'
 import AgentHome from './pages/agent/AgentHome'
+import RecentCalls from './pages/agent/RecentCalls'
 
 function App() {
   const userRole = 'admin'
@@ -23,6 +24,7 @@ function App() {
           </Route>
           <Route path='agent' element={<ProtectedRoute role={userRole} allowedRoles={['admin', 'supervisor', 'agent']} />} >
             <Route index element={<AgentHome />} />
+            <Route path='recentcalls' element={<RecentCalls />} />
           </Route>
         </Route>
         <Route path='/sign-in' element={<SignIn />} />
