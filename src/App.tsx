@@ -1,11 +1,34 @@
-import { ModeToggle } from './components/mode-toggle'
+import { Route, Routes } from 'react-router-dom'
+import Error from './pages/error/Error'
+import SignIn from './pages/auth/SignIn'
+import Home from './pages/Home'
+import DashboardLayout from './layouts/DashboardLayout'
+import ProtectedRoute from './providers/guards/ProtectedRoute'
+import AdminHome from './pages/admin/AdminHome'
+import SupervisorHome from './pages/supervisor/SupervisorHome'
+import AgentHome from './pages/agent/AgentHome'
 
 function App() {
-
+  const userRole = 'admin'
   return (
-    <>
-      <ModeToggle />
-    </>
+    <div>
+      <Routes>
+        <Route path='/' element={<Home />} />
+        <Route path='/dashboard' element={<DashboardLayout userRole={userRole} />} >
+          <Route path='admin' element={<ProtectedRoute role={userRole} allowedRoles={['admin']} />} >
+            <Route index element={<AdminHome />} />
+          </Route>
+          <Route path='supervisor' element={<ProtectedRoute role={userRole} allowedRoles={['admin', 'supervisor']} />} >
+            <Route index element={<SupervisorHome />} />
+          </Route>
+          <Route path='agent' element={<ProtectedRoute role={userRole} allowedRoles={['admin', 'supervisor', 'agent']} />} >
+            <Route index element={<AgentHome />} />
+          </Route>
+        </Route>
+        <Route path='/sign-in' element={<SignIn />} />
+        <Route path='*' element={<Error />} />
+      </Routes>
+    </div>
   )
 }
 
