@@ -138,7 +138,7 @@ const AgentHome = () => {
   const handleHangup = async () => {
     if (simpleUser && isRinging || isInCall) {
       try {
-        await simpleUser.hangup();
+        await simpleUser?.hangup();
         setIsInCall(false);
         setIsRinging(false);
       } catch (error) {
@@ -189,7 +189,7 @@ const AgentHome = () => {
   }
 
   return (
-    <main className="profile-page dark:bg-gray-600 w-full h-full dark:text-white">
+    <main className="profile-page dark:bg-gray-600 w-full h-max overflow-y-scroll dark:text-white">
       <audio ref={remoteAudioRef} id="remoteAudio" autoPlay />
       <div>
         <div>
