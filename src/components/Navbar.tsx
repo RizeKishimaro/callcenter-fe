@@ -7,7 +7,7 @@ type Props = {}
 const Navbar = (props: Props) => {
     return (
         <>
-            <div className="hidden flex-col md:flex">
+            <div className="hidden flex-col md:flex md:mb-3">
                 <div className="border-b">
                     <div className="flex h-16 items-center px-4">
                         {/* <TeamSwitcher />

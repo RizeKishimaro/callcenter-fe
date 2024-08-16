@@ -21,7 +21,7 @@ import {
 import { Separator } from './ui/separator';
 import { Nav } from './Nav';
 
-const Sidebar = ({ userRole, isCollapsed }: { userRole: string, isCollapsed: boolean, }) => {
+const  Sidebar = ({ userRole, isCollapsed }: { userRole: string, isCollapsed: boolean, }) => {
 
     return (
         <div className='h-screen'>

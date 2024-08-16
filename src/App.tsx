@@ -16,11 +16,8 @@ function App() {
       <Routes>
         <Route path='/' element={<Home />} />
         <Route path='/dashboard' element={<DashboardLayout userRole={userRole} />} >
-          <Route path='admin' element={<ProtectedRoute role={userRole} allowedRoles={['admin']} />} >
+          <Route path='manage' element={<ProtectedRoute role={userRole} allowedRoles={['admin']} />} >
             <Route index element={<AdminHome />} />
-          </Route>
-          <Route path='supervisor' element={<ProtectedRoute role={userRole} allowedRoles={['admin', 'supervisor']} />} >
-            <Route index element={<SupervisorHome />} />
           </Route>
           <Route path='agent' element={<ProtectedRoute role={userRole} allowedRoles={['admin', 'supervisor', 'agent']} />} >
             <Route index element={<AgentHome />} />
