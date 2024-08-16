@@ -46,14 +46,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userRole }) => {
 
   if (location.pathname === '/dashboard') {
     switch (userRole) {
-      case 'admin':
-        return <Navigate to="/dashboard/admin" replace />;
-      case 'supervisor':
-        return <Navigate to="/dashboard/supervisor" replace />;
+      // case 'admin':
+      //   return <Navigate to="/dashboard/admin" replace />;
+      // case 'supervisor':
+      //   return <Navigate to="/dashboard/supervisor" replace />;
       case 'agent':
         return <Navigate to="/dashboard/agent" replace />;
       default:
-        return <Navigate to="/error" replace />;
+        return <Navigate to="/dashboard/manage" replace />;
     }
   }
 
@@ -67,7 +67,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userRole }) => {
           }
           document.cookie = `react-resizable-panels:layout:mail=${JSON.stringify(sizes)}`;
         }}
-        className="h-screen items-stretch"
+        className="items-stretch"
       >
         <ResizablePanel
           defaultSize={panelSize}
@@ -78,13 +78,19 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userRole }) => {
           onResize={handleResize}
           className={cn(isCollapsed && 'max-w-[50px] transition-all duration-300 ease-in-out')}
         >
-          <Sidebar userRole={userRole} isCollapsed={isCollapsed} />
+          <div className="overflow-auto w-auto h-auto">
+            <Sidebar userRole={userRole} isCollapsed={isCollapsed} />
+          </div>
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel>
           <ResizablePanelGroup direction='vertical'>
-            <ResizablePanel defaultSize={10}><Navbar /></ResizablePanel>
-            <ResizablePanel><Outlet /></ResizablePanel>
+            <ResizablePanel defaultSize={12}><Navbar /></ResizablePanel>
+            <ResizablePanel>
+              <div className="overflow-auto w-auto h-full">
+                <Outlet />
+              </div>
+            </ResizablePanel>
           </ResizablePanelGroup>
         </ResizablePanel>
         <ResizableHandle />
