@@ -1,11 +1,14 @@
 import React from 'react'
+import SipCreateForm from './components/SipCreateForm'
 
 const SetupHome = () => {
   return (
     <div className='h-screen py-5'>
       <div className='w-3/4 mx-auto flex h-full justify-between '>
-        <div className='bg-gray-200 h-full w-3/4 p-2 '>
-          <h3 className=' text-2xl mt-3 font-medium text-center'>Your Future Call Center Is Waiting!</h3>
+
+        <div className='h-full w-3/4 p-2 '>
+          <SipCreateForm />
+
         </div>
         <div className=''>
           <ol className="overflow-hidden space-y-8">
