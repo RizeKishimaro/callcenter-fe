@@ -18,6 +18,7 @@ interface NavProps {
         label?: string
         icon: LucideIcon
         variant: "default" | "ghost"
+        href?: string
     }[]
 }
 
@@ -33,7 +34,7 @@ export function Nav({ links, isCollapsed }: NavProps) {
                         <Tooltip key={index} delayDuration={0}>
                             <TooltipTrigger asChild>
                                 <Link
-                                    to="/"
+                                    to={link.href ? link.href : "/"}
                                     className={cn(
                                         buttonVariants({ variant: link.variant, size: "icon" }),
                                         "h-12 w-12",
@@ -57,7 +58,7 @@ export function Nav({ links, isCollapsed }: NavProps) {
                     ) : (
                         <Link
                             key={index}
-                            to="/"
+                            to={link.href ? link.href : "/"}
                             className={cn(
                                 buttonVariants({ variant: link.variant, size: "sm" }),
                                 link.variant === "default" &&
