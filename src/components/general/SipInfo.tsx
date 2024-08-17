@@ -19,7 +19,7 @@ const SipInfo = (props: Props) => {
                 <div className="flex flex-col md:flex-row h-full justify-between">
                     <div className="flex-1 flex flex-col gap-y-3">
                         <div className="flex space-x-2 items-center">
-                            <button className='px-8 py-1 bg-success rounded-full text-md font-semibold hover:bg-success/75 transition-all ease-in-out'>Active</button>
+                            <button className='px-8 py-1 bg-success rounded-full text-md font-semibold text-white hover:bg-success/75 transition-all ease-in-out'>Active</button>
                             <RefreshCcw />
                         </div>
                         <h3 className='font-thin text-md'>Telecom: Atom</h3>

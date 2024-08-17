@@ -4,7 +4,7 @@ type Props = {}
 
 const CallCount = (props: Props) => {
   return (
-    <div className='w-full h-[185px] bg-dashboardSecondary flex flex-col md:flex-row items-center justify-center rounded-md'>
+    <div className='w-full h-[185px] bg-dashboardSecondary text-black dark:bg-dashboardSecondary-foreground dark:text-white flex flex-col md:flex-row items-center justify-center rounded-md'>
         <div className="flex justify-between md:flex-row items-center flex-col  w-3/5 px-10">
             <div className="flex items-center justify-center flex-col">
                 <h1 className='text-9xl'>5</h1>
