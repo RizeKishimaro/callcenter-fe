@@ -8,12 +8,14 @@ import AdminHome from './pages/admin/AdminHome'
 import SupervisorHome from './pages/supervisor/SupervisorHome'
 import AgentHome from './pages/agent/AgentHome'
 import RecentCalls from './pages/agent/RecentCalls'
+import SetupHome from './setup/SetupHome'
 
 function App() {
   const userRole = 'admin'
   return (
     <div>
       <Routes>
+        <Route path="setup" element={<SetupHome />} />
         <Route path='/' element={<Home />} />
         <Route path='/dashboard' element={<DashboardLayout userRole={userRole} />} >
           <Route path='manage' element={<ProtectedRoute role={userRole} allowedRoles={['admin']} />} >
