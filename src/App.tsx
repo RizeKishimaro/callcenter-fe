@@ -5,7 +5,6 @@ import Home from './pages/Home'
 import DashboardLayout from './layouts/DashboardLayout'
 import ProtectedRoute from './providers/guards/ProtectedRoute'
 import AdminHome from './pages/admin/AdminHome'
-import SupervisorHome from './pages/supervisor/SupervisorHome'
 import AgentHome from './pages/agent/AgentHome'
 import RecentCalls from './pages/agent/RecentCalls'
 
