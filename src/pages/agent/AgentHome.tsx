@@ -45,7 +45,6 @@ const AgentHome = () => {
     const user = new SimpleUser(server, options);
     user.delegate = {
       onRegistered: async () => {
-        window.alert("You Logged In successfully")
       },
       onCallReceived: async () => {
         window.alert("First Invte");

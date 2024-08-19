@@ -18,6 +18,8 @@ interface IFormInput {
 
 
 const SignInForm = () => {
+
+  const navigate = useNavigate(); // For navigation after login
   const form = useForm<signInSchemaType>({
     resolver: zodResolver(signInSchema), defaultValues: {
       sipUsername: "",
@@ -28,15 +30,18 @@ const SignInForm = () => {
   const { mutate, isPending, isSuccess } = useMutation({
     mutationFn: ({ sipUsername, password }) => login({ sipUsername, password }),
     onSuccess: (data) => {
-
+      console.log("hehe", data)
+      localStorage.setItem("access_token", data?.access_token);
+      localStorage.setItem("refresh_token", data?.refresh_token);
+      navigate("/dashboard/agent")
     }
   })
 
-  const navigate = useNavigate(); // For navigation after login
 
 
   function onSubmit(values: z.infer<typeof signInSchema>) {
     const { sipUsername, password } = values;
+    console.log(values)
     mutate({ sipUsername, password })
   }
   return (
