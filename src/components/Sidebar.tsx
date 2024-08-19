@@ -36,7 +36,7 @@ const  Sidebar = ({ userRole, isCollapsed }: { userRole: string, isCollapsed: bo
                 isCollapsed={isCollapsed}
                 links={[
                     { title: 'Dashboard', label: '', icon: LayoutDashboard, variant: 'ghost', href: '/dashboard/manage' },
-                    { title: 'Business', label: '', icon: Building2, variant: 'ghost', href: '/dashboard/manage/business' },
+                    { title: 'Business', label: '', icon: Building2, variant: 'ghost', href: '/dashboard/manage/set-up' },
                     { title: 'IVR', label: '28', icon: AudioLines, variant: 'ghost', href: '/dashboard/manage/ivr' },
                     { title: 'Agent', label: '12', icon: Users2, variant: 'ghost', href: '/dashboard/manage/agent' },
                     { title: 'Campaign', label: '128', icon: ListEnd, variant: 'ghost', href: '/dashboard/manage/campaign' },

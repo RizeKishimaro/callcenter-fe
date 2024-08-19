@@ -8,6 +8,7 @@ import AdminHome from './pages/admin/AdminHome'
 import AgentHome from './pages/agent/AgentHome'
 import RecentCalls from './pages/agent/RecentCalls'
 import SetupHome from './setup/SetupHome'
+import SetUp from './pages/admin/SetUp'
 
 function App() {
   const userRole = 'admin'
@@ -19,6 +20,7 @@ function App() {
         <Route path='/dashboard' element={<DashboardLayout userRole={userRole} />} >
           <Route path='manage' element={<ProtectedRoute role={userRole} allowedRoles={['admin']} />} >
             <Route index element={<AdminHome />} />
+            <Route path='set-up' element={<SetUp />} />
           </Route>
           <Route path='agent' element={<ProtectedRoute role={userRole} allowedRoles={['admin', 'supervisor', 'agent']} />} >
             <Route index element={<AgentHome />} />
