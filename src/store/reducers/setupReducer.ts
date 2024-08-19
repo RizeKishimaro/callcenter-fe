@@ -1,9 +1,10 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-  currentStep: 3,
+  currentStep: 4,
   sipProvider: null,
   ivr: null,
+  ivrTree: null,
 };
 
 const setupSlice = createSlice({
@@ -24,13 +25,16 @@ const setupSlice = createSlice({
     setSipProvider: (state, { payload }) => {
       state.sipProvider = payload;
     },
+    setIvrTree: (state, { payload }) => {
+      state.ivrTree = payload;
+    },
     setIvr: (state, { payload }) => {
       state.ivr = payload;
     },
   },
 });
 
-export const { nextStep, previousStep, setSipProvider, setIvr } =
+export const { nextStep, previousStep, setSipProvider, setIvr, setIvrTree } =
   setupSlice.actions;
 
 export default setupSlice.reducer;

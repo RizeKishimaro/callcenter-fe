@@ -1,16 +1,12 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { IvrTreeNodeType } from '../../providers/types/IvrTreeNodeTypes';
-import { Tree, TreeNode } from 'react-organizational-chart';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-import { useForm } from 'react-hook-form';
-import { ivrTreeSchema, ivrTreeSchemaType } from '../../providers/schema/zodSchema';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
-
-type Props = {}
+import { useDispatch } from 'react-redux';
+import { nextStep, setIvrTree } from '../../store/reducers/setupReducer';
+import Tree from '../Tree';
 
 const initialIvrTree: IvrTreeNodeType = {
   id: 1,
@@ -21,23 +17,18 @@ const initialIvrTree: IvrTreeNodeType = {
 
 const uploadedIvrList: string[] = ['intro', 'greeting', 'option', 'Message 1', 'Message 2'];
 
-const IvrTreeForm = (props: Props) => {
+const IvrTreeForm = () => {
   const [tree, setTree] = useState<IvrTreeNodeType>(initialIvrTree);
+  const dispatch = useDispatch();
+  const [parentId, setParentId] = useState<number>(1);
+  const [label, setLabel] = useState<string>("");
 
-  const form = useForm<ivrTreeSchemaType>({
-    resolver: zodResolver(ivrTreeSchema),
-    defaultValues: {
-      parentId: 0,
-      label: ""
-    }
-  });
-
-  const addNode = (data: ivrTreeSchemaType) => {
+  const addNode = () => {
     const addNodeRecursive = (node: IvrTreeNodeType) => {
-      if (node.id === data.parentId) {
+      if (node.id === parentId) {
         node.children.push({
           id: Date.now(),
-          label: data.label,
+          label: label,
           parentId: node.id,
           children: [],
         });
@@ -49,7 +40,10 @@ const IvrTreeForm = (props: Props) => {
     const updatedTree = { ...tree };
     addNodeRecursive(updatedTree);
     setTree(updatedTree);
-    form.reset({ parentId: 0, label: "" });
+
+    // Reset form fields
+    setParentId(1);  // Set back to Root node
+    setLabel("");
   };
 
   const removeNode = (nodeId: number) => {
@@ -64,27 +58,6 @@ const IvrTreeForm = (props: Props) => {
       setTree(updatedTree);
     }
   };
-
-  const renderTree = (node: IvrTreeNodeType, branchIndex: number | null = null) => (
-    <TreeNode
-      key={node.id}
-      label={
-        <div className="flex items-center w-full mx-auto justify-center">
-          {branchIndex !== null ? ` ${branchIndex + 1}: ${node.label}` : node.label}
-          {node.id !== 1 && (
-            <button
-              className="ml-2 text-red-500 hover:text-red-700"
-              onClick={() => removeNode(node.id)}
-            >
-              Remove
-            </button>
-          )}
-        </div>
-      }
-    >
-      {node.children.map((child, index) => renderTree(child, index))}
-    </TreeNode>
-  );
 
   const getAllNodes = (node: IvrTreeNodeType, nodes: { id: number; label: string }[] = []) => {
     nodes.push({ id: node.id, label: node.label });
@@ -104,6 +77,11 @@ const IvrTreeForm = (props: Props) => {
     </SelectItem>
   ));
 
+  const handleSubmitIvrTree = () => {
+    dispatch(setIvrTree(tree));
+    dispatch(nextStep());
+  }
+
   return (
     <Card className="w-[80%] overflow-auto">
       <CardHeader className='text-center space-y-5'>
@@ -111,56 +89,44 @@ const IvrTreeForm = (props: Props) => {
         <CardDescription>Step: 3 Setup your uploaded ivr file with tree here!</CardDescription>
       </CardHeader>
       <CardContent className='overflow-auto'>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(addNode)} className='flex md:flex-row flex-col h-full justify-between items-center mt-5 lg:mb-12'>
-            <div className="flex gap-x-3 flex-1">
-              <FormField control={form.control} name='parentId' render={({ field }) => (
-                <FormItem className='flex-1'>
-                  <FormLabel>Parent IVR</FormLabel>
-                  <Select onValueChange={(value) => field.onChange(parseInt(value, 10))}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Please select parent ivr name" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {ivrTreeParentOptions}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )} />
-              <FormField control={form.control} name='label' render={({ field }) => (
-                <FormItem className='flex-1'>
-                  <FormLabel>IVR Label</FormLabel>
-                  <Select onValueChange={field.onChange}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Please select child ivr" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {ivrOptionLists}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )} />
+        <div className='flex md:flex-row flex-col h-full justify-between items-center mt-5 lg:mb-12'>
+          <div className="flex gap-x-3 flex-1">
+            <div className='flex-1'>
+              <label>Parent IVR</label>
+              <Select onValueChange={(value) => setParentId(parseInt(value, 10))} value={parentId.toString()}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Please select parent ivr name" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ivrTreeParentOptions}
+                </SelectContent>
+              </Select>
             </div>
-            <div className="w-full text-end flex-1 mt-7">
-              <Button type='submit' className='px-10'>Add</Button>
+            <div className='flex-1'>
+              <label>IVR Label</label>
+              <Select onValueChange={setLabel} value={label}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Please select child ivr" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ivrOptionLists}
+                </SelectContent>
+              </Select>
             </div>
-          </form>
-        </Form>
+          </div>
+          <div className="w-full text-end flex-1 mt-7">
+            <Button onClick={addNode} className='px-10'>Add</Button>
+          </div>
+        </div>
         <Separator className='lg:mb-12' />
-        <Tree
-          lineWidth={'2px'}
-          lineColor={'green'}
-          lineBorderRadius={'10px'}
-          label={tree.label}
-        >
-          {tree.children.map((child, index) => renderTree(child, index))}
-        </Tree>
+        <div className="">
+          <div className="h-full max-h-[550px] min-h-[300px] w-full overflow-auto scroll-smooth custom-scrollbar">
+            <Tree tree={tree} onRemoveNode={removeNode} canRemoveNode={true} />
+          </div>
+          <div className="w-full text-end flex-1 mt-7">
+            <Button onClick={handleSubmitIvrTree} className='px-10'>Submit Tree</Button>
+          </div>
+        </div>
       </CardContent>
     </Card>
   )
