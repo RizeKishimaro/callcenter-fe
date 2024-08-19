@@ -51,6 +51,13 @@ export const ivrFileUploadSchema = z.object({
     .refine((file) => file.size <= 50 * 1024 * 1024, "Max file size is 50MB"),
 });
 
+export const ivrTreeSchema = z.object({
+  parentId: z.number().min(1, "Parent IVR is required."),
+  label: z.string().min(1, "Label is required"),
+});
+
+export type ivrTreeSchemaType = z.infer<typeof ivrTreeSchema>;
+
 export type sipProviderSchemaType = z.infer<typeof sipProviderSchema>;
 
 export type signInSchemaType = z.infer<typeof signInSchema>;
