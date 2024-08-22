@@ -1,4 +1,4 @@
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form';
@@ -10,14 +10,9 @@ import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { login } from '../../service/auth/authService';
 import { useDispatch } from 'react-redux';
-import { setUserInfo } from '../../store/reducers/authReducer';
 
-interface IFormInput {
-  preventDefault(): unknown;
-  sipUsername: string;
-  password: string;
-}
-
+import { setToken, setUserInfo } from '../../store/reducers/authReducer';
+import { useEncrypt } from '../../store/hooks/useEncrypt';
 
 const SignInForm = () => {
 
@@ -30,14 +25,18 @@ const SignInForm = () => {
     }
   })
 
-  const { mutate, isPending, isSuccess } = useMutation({
-    mutationFn: ({ sipUsername, password }) => login({ sipUsername, password }),
+  const { mutate } = useMutation({
+    mutationFn: ({ sipUsername, password }: { sipUsername: string; password: string }) => login({ sipUsername, password }),
     onSuccess: (data) => {
-      localStorage.setItem("access_token", data?.access_token);
-      localStorage.setItem("refresh_token", data?.refresh_token);
+
+      dispatch(setToken({ access_token: data?.access_token, refresh_token: data?.refresh_token }))
+      const encryptedPassword = useEncrypt(form.getValues("password"));
+      const encryptedSipUsername = useEncrypt(form.getValues('sipUsername'))
+      dispatch(setUserInfo({ sipUsername: encryptedSipUsername, password: encryptedPassword }))
       navigate("/dashboard/agent")
     }
   })
+
 
 
 

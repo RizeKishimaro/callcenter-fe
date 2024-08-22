@@ -1,13 +1,13 @@
 import { useRef, useState, useEffect } from "react";
 import { SimpleUser, SimpleUserOptions } from "sip.js/lib/platform/web";
 import { UserAgent } from "sip.js";
-import Dialpad from "./Dialpad";
 import { useNavigate } from "react-router-dom";
 import { PhoneCall, PhoneForwarded, PhoneOff } from "lucide-react";
 import { Input } from "../../components/ui/input";
 import { useSelector } from "react-redux";
 
 const AgentHome = () => {
+
   const remoteAudioRef = useRef<any>(null);
   const [simpleUser, setSimpleUser] = useState<SimpleUser>();
   const [isCalling, setIsCalling] = useState(false);
