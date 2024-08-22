@@ -1,4 +1,3 @@
-import axios from "axios";
 import axiosInstance from "../../providers/axiosClient";
 
 // Define the API endpoints
@@ -12,16 +11,17 @@ export const getProfile = async () => {
 };
 
 // Login function to authenticate the user
-export const login = async (credentials: {
-  sipUsername: string;
-  password: string;
-}) => {
-  const response = await axios.post(LOGIN_URL, {
-    sipName: credentials.sipUsername,
-    password: credentials.password
-  });
-  localStorage.setItem("sipUsername", credentials.sipUsername);
-  localStorage.setItem("password", credentials.password);
-  console.log(response)
-  return response.data;
+export const login = async (credentials: { sipUsername: string; password: string }) => {
+  try {
+    const response = await axiosInstance.post(LOGIN_URL, {
+      sipName: credentials.sipUsername,
+      password: credentials.password,
+    });
+    
+    console.log(response);
+    return response.data;
+  } catch (error) {
+    console.error("Login error:", error);
+    throw error; // You might want to handle this error further in your UI
+  }
 };
