@@ -22,6 +22,5 @@ export const login = async (credentials: {
   });
   localStorage.setItem("sipUsername", credentials.sipUsername);
   localStorage.setItem("password", credentials.password);
-  console.log(response)
   return response.data;
 };

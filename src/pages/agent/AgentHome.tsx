@@ -5,6 +5,7 @@ import Dialpad from "./Dialpad";
 import { useNavigate } from "react-router-dom";
 import { PhoneCall, PhoneForwarded, PhoneOff } from "lucide-react";
 import { Input } from "../../components/ui/input";
+import { useSelector } from "react-redux";
 
 const AgentHome = () => {
   const remoteAudioRef = useRef<any>(null);
@@ -18,9 +19,10 @@ const AgentHome = () => {
   const [providerAddress, setProviderAddress] = useState("192.168.130.20")
   const navigate = useNavigate();
 
+
   const agentAccount = {
-    sipUsername: "agt012399001",
-    sipPassword: "password"
+    sipUsername: localStorage.getItem("sipUsername"),
+    sipPassword: localStorage.getItem("password")
   }
   useEffect(() => {
     const server = `${import.meta.env.VITE_APP_WEBSOCKET_HOST}:${import.meta.env.VITE_APP_WEBSOCKET_PORT}/ws`;

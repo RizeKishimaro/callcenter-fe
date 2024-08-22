@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom'
+import { Route, Routes, useNavigate } from 'react-router-dom'
 import Error from './pages/error/Error'
 import SignIn from './pages/auth/SignIn'
 import Home from './pages/Home'
@@ -9,9 +9,23 @@ import AgentHome from './pages/agent/AgentHome'
 import RecentCalls from './pages/agent/RecentCalls'
 import SetupHome from './setup/SetupHome'
 import SetUp from './pages/admin/SetUp'
+import { jwtDecode } from 'jwt-decode';
+import { useEffect, useState } from 'react'
+import { JWTTokenTypes } from './providers/types/jwttypes'
 
 function App() {
-  const userRole = 'admin'
+  const [userRole, setUserRole] = useState("admin");
+  const navigate = useNavigate();
+  useEffect(() => {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      navigate("/")
+    }
+    const payload: JWTTokenTypes = jwtDecode(token);
+    setUserRole("admin")
+
+  }, [])
+
   return (
     <div>
       <Routes>

@@ -9,6 +9,8 @@ import { Input } from '../ui/input';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { login } from '../../service/auth/authService';
+import { useDispatch } from 'react-redux';
+import { setUserInfo } from '../../store/reducers/authReducer';
 
 interface IFormInput {
   preventDefault(): unknown;
@@ -20,6 +22,7 @@ interface IFormInput {
 const SignInForm = () => {
 
   const navigate = useNavigate(); // For navigation after login
+  const dispatch = useDispatch();
   const form = useForm<signInSchemaType>({
     resolver: zodResolver(signInSchema), defaultValues: {
       sipUsername: "",
@@ -30,7 +33,6 @@ const SignInForm = () => {
   const { mutate, isPending, isSuccess } = useMutation({
     mutationFn: ({ sipUsername, password }) => login({ sipUsername, password }),
     onSuccess: (data) => {
-      console.log("hehe", data)
       localStorage.setItem("access_token", data?.access_token);
       localStorage.setItem("refresh_token", data?.refresh_token);
       navigate("/dashboard/agent")
@@ -42,6 +44,8 @@ const SignInForm = () => {
   function onSubmit(values: z.infer<typeof signInSchema>) {
     const { sipUsername, password } = values;
     console.log(values)
+
+    dispatch(setUserInfo({ sipUsername, password }))
     mutate({ sipUsername, password })
   }
   return (

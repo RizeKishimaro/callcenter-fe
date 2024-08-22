@@ -1,6 +1,6 @@
 // src/components/ProtectedRoute.tsx
 import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 
 interface ProtectedRouteProps {
   role: string;
@@ -8,7 +8,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ role, allowedRoles }) => {
-  return allowedRoles.includes(role) ? <Outlet /> : <Navigate to="/error" replace />;
+  return allowedRoles.includes(role) ? <Outlet /> : <>You Are Not Authorized To Perform this action</>;
 };
 
 export default ProtectedRoute;
