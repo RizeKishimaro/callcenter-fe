@@ -1,26 +1,34 @@
 import React from 'react';
 import { Tree as OrgTree, TreeNode } from 'react-organizational-chart';
 import { IvrTreeNodeType } from '../providers/types/IvrTreeNodeTypes';
+import { X } from 'lucide-react';
 
 type TreeProps = {
-  tree: IvrTreeNodeType;
+  tree: IvrTreeNodeType | null;  // Allow tree to be null
   onRemoveNode?: (nodeId: number) => void;
   canRemoveNode: boolean;
 };
 
 const Tree: React.FC<TreeProps> = ({ tree, onRemoveNode, canRemoveNode }) => {
+  if (!tree) {
+    // If tree is null, render nothing or some placeholder
+    return <div>No tree data available.</div>;
+  }
+
   const renderTree = (node: IvrTreeNodeType, branchIndex: number | null = null) => (
     <TreeNode
       key={node.id}
       label={
-        <div className="flex items-center mx-auto justify-center">
-          {branchIndex !== null ? ` ${branchIndex + 1}: ${node.label}` : node.label}
+        <div className="flex items-center justify-center">
+          <span>
+            {branchIndex !== null ? `${branchIndex + 1}: ${node?.label}` : node?.label}
+          </span>
           {canRemoveNode && node.id !== 1 && (
             <button
-              className="ml-2 text-red-500 hover:text-red-700"
+              className="text-red-500 hover:text-red-700 -mt-4"
               onClick={() => onRemoveNode && onRemoveNode(node.id)}
             >
-              Remove
+              <X className="h-4 w-4" />
             </button>
           )}
         </div>
@@ -35,7 +43,7 @@ const Tree: React.FC<TreeProps> = ({ tree, onRemoveNode, canRemoveNode }) => {
       lineWidth={'2px'}
       lineColor={'green'}
       lineBorderRadius={'10px'}
-      label={tree.label}
+      label={tree?.label}
     >
       {tree.children.map((child, index) => renderTree(child, index))}
     </OrgTree>

@@ -26,6 +26,9 @@ axiosInstance.interceptors.response.use(
         const originalRequest = error.config;
 
         if (error.response?.status === 401 && !originalRequest._retry) {
+
+            console.log("Second try : ");
+
             originalRequest._retry = true;
 
             try {
@@ -45,11 +48,14 @@ axiosInstance.interceptors.response.use(
                     store.dispatch(logout());
                     return Promise.reject(error);
                 }
+
+                
             } catch (err) {
                 store.dispatch(logout());
                 return Promise.reject(err);
             }
         }
+        console.log("Second try :  PB");
 
         return Promise.reject(error);
     }

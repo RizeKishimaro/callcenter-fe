@@ -7,7 +7,6 @@ import ProtectedRoute from './providers/guards/ProtectedRoute'
 import AdminHome from './pages/admin/AdminHome'
 import AgentHome from './pages/agent/AgentHome'
 import RecentCalls from './pages/agent/RecentCalls'
-import SetupHome from './setup/SetupHome'
 import SetUp from './pages/admin/SetUp'
 
 function App() {
@@ -15,7 +14,6 @@ function App() {
   return (
     <div>
       <Routes>
-        <Route path="setup" element={<SetupHome />} />
         <Route path='/' element={<Home />} />
         <Route path='/dashboard' element={<DashboardLayout userRole={userRole} />} >
           <Route path='manage' element={<ProtectedRoute role={userRole} allowedRoles={['admin']} />} >
