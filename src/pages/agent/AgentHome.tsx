@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { PhoneCall, PhoneForwarded, PhoneOff } from "lucide-react";
 import { Input } from "../../components/ui/input";
 import { useSelector } from "react-redux";
+import { useDecrypt } from "../../store/hooks/useDecrypt";
 
 const AgentHome = () => {
 
@@ -21,8 +22,8 @@ const AgentHome = () => {
 
 
   const agentAccount = {
-    sipUsername: localStorage.getItem("sipUsername"),
-    sipPassword: localStorage.getItem("password")
+    sipUsername: useDecrypt(localStorage.getItem("sipUsername") || ""),
+    sipPassword: useDecrypt(localStorage.getItem("password") || "")
   }
   useEffect(() => {
     const server = `${import.meta.env.VITE_APP_WEBSOCKET_HOST}:${import.meta.env.VITE_APP_WEBSOCKET_PORT}/ws`;
