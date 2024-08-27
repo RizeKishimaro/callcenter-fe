@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { PhoneCall, PhoneForwarded, PhoneOff } from "lucide-react";
 import { Input } from "../../components/ui/input";
 import { useDecrypt } from "../../store/hooks/useDecrypt";
+import axiosInstance from "../../providers/axiosClient";
 
 const AgentHome = () => {
 
@@ -24,8 +25,8 @@ const AgentHome = () => {
   const agentAccount = {
     sipUsername: useDecrypt(localStorage.getItem("sipUsername") || ""),
     sipPassword: useDecrypt(localStorage.getItem("password") || "")
-
   }
+  const agentInfo = axiosInstance.get("")
 
   useEffect(() => {
     const server = `${import.meta.env.VITE_APP_WEBSOCKET_HOST}:${import.meta.env.VITE_APP_WEBSOCKET_PORT}/ws`;
