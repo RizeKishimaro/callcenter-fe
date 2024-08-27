@@ -1,7 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-  currentStep: 4,
+  currentStep: 3,
   sipProvider: null,
   ivr: null,
   ivrTree: null,

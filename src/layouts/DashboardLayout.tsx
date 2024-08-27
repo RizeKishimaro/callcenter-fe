@@ -51,7 +51,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userRole }) => {
       // case 'supervisor':
       //   return <Navigate to="/dashboard/supervisor" replace />;
       case 'agent':
-        return <Navigate to="/dashboard/agent" replace />;
+        return <Navigate to="/dashboard/agents" replace />;
       default:
         return <Navigate to="/dashboard/manage" replace />;
     }

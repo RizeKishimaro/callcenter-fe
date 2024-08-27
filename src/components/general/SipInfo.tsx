@@ -1,5 +1,5 @@
-import React from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
+import React, { useEffect, useState } from 'react'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../ui/card'
 import { RefreshCcw } from 'lucide-react'
 import { Separator } from '../ui/separator'
 import { Progress } from '../ui/progress'
@@ -7,6 +7,30 @@ import { Progress } from '../ui/progress'
 type Props = {}
 
 const SipInfo = (props: Props) => {
+  const [cpuPercentage, setCpuPercentage] = useState(0);
+  const [memoryPercentage, setMemoryPercentage] = useState(0);
+  const [diskSpacePercentage, setDiskSpacePercentage] = useState(0);
+  const [message, setMessage] = useState()
+  useEffect(() => {
+    const eventSource = new EventSource('http://localhost:3000/sysinfo');
+
+    eventSource.onmessage = function(event) {
+      const { data } = JSON.parse(event.data);
+      setCpuPercentage(data.cpu.average);
+      setMemoryPercentage(data.memory.percentageUsed)
+      setDiskSpacePercentage(data.disk.percentageUsed)
+      setMessage(data);
+    };
+
+    eventSource.onerror = function(err) {
+      console.error('EventSource failed:', err);
+      eventSource.close();
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, []);
   const now = new Date();
   const timeNow = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
   const monthNow = now.toLocaleString('en-US', { month: 'long' });
@@ -14,7 +38,7 @@ const SipInfo = (props: Props) => {
   const dateNow = now.getDate();
   const yearNow = now.getFullYear();
   return (
-    <Card className='bg-dashboardSecondary dark:bg-dashboardSecondary-foreground text-black dark:text-white h-[450px]'>
+    <Card className='bg-dashboardSecondary dark:bg-dashboardSecondary-foreground text-black dark:text-white h-auto'>
       <CardHeader >
         <div className="flex flex-col md:flex-row h-full justify-between">
           <div className="flex-1 flex flex-col gap-y-3">
@@ -33,25 +57,57 @@ const SipInfo = (props: Props) => {
         </div>
       </CardHeader>
       <Separator className='my-5' />
-      <CardContent className='mt-3 flex flex-col' >
-        <div className="flex flex-col h-full">
+      <CardContent className='mt-3 flex flex-row w-full' >
+        <div className="flex flex-col h-full w-full">
           <div className="flex flex-col gap-y-4">
             <div className="flex">
               <p className='w-1/3'>CPU</p>
-              <Progress value={55} className='w-[100%]' />
+              <Progress value={cpuPercentage} className='w-[100%]' />
             </div>
             <div className="flex">
               <p className='w-1/3'>Memory</p>
-              <Progress value={35} className='w-[100%]' />
+              <Progress value={memoryPercentage} className="w-full" />
             </div>
             <div className="flex">
               <p className='w-1/3'>Storage</p>
-              <Progress value={75} className='w-[100%]' />
+              <Progress value={diskSpacePercentage} className='w-[100%]' />
             </div>
           </div>
-          <button className='text-btnPrimary text-end text-md tracking-wider font-light mt-5'>Settings</button>
         </div>
       </CardContent>
+      <CardFooter className='flex-row justify-between w-full flex items-start'>
+        <div className='h-full w-1/2 text-start'>
+          <div>
+            {
+              message && message.cpu.individual.map((el, index) => {
+                return (
+                  <div>
+                    <p>Core {index}: {Math.floor(el.usage)}%</p>
+                  </div>
+
+                )
+              })
+            }
+
+
+          </div>
+        </div>
+
+        <div>
+          <div>
+            <p>CPU: {cpuPercentage && Math.floor(cpuPercentage)}%</p>
+          </div>
+          <div>
+            <p>RAM: {memoryPercentage && Math.floor(memoryPercentage)}%</p>
+          </div>
+
+          <div>
+            <p>Storage: {diskSpacePercentage && Math.floor(diskSpacePercentage)}%</p>
+          </div>
+
+        </div>
+
+      </CardFooter>
     </Card>
   )
 }

@@ -1,28 +1,28 @@
-"use client"
 import { ArrowUpDown, MoreHorizontal } from "lucide-react"
-import { Button } from "../../../components/ui/button"
+import { Button } from "@components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "../../../components/ui/dropdown-menu"
-import { Checkbox } from "../../../components/ui/checkbox"
+} from "@components/ui/dropdown-menu"
+import { Checkbox } from "@components/ui/checkbox"
+
 import { ColumnDef } from "@tanstack/react-table"
 
-
-export type CallHistory = {
-  id: string
-  csnumber: string
-  agnumber: string
-  calltimemin: number
-  calltimesec: number
-  status: "ANSWER" | "NO ANSWER"
+export type Agent = {
+  id: number
+  ag_name: string
+  sip_name: string
+  ag_profile: string | null
+  ag_call_time: number | null
+  campaign_id: number
+  sip_provider_id: number
+  created_at: string
 }
 
-export const columns: ColumnDef<CallHistory>[] = [
+export const agentcolumns: ColumnDef<Agent>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -60,30 +60,46 @@ export const columns: ColumnDef<CallHistory>[] = [
     },
   },
   {
-    accessorKey: "csnumber",
-    header: "CustomerMobileNumber",
+    accessorKey: "ag_name",
+    header: "Agent Name",
   },
   {
-    accessorKey: "agnumber",
-    header: "AgentNumber",
+    accessorKey: "sip_name",
+    header: "SIP Name",
   },
   {
-    accessorKey: "calltimemin",
-    header: "CallTime(Minute)",
+    accessorKey: "ag_profile",
+    header: "Profile",
   },
   {
-    accessorKey: "calltimesec",
-    header: "CallTime(sec)"
+    accessorKey: "ag_call_time",
+    header: "Call Time (s)",
+    cell: ({ getValue }) => {
+      const callTime = getValue<number | null>()
+      return callTime !== null ? `${callTime}s` : "N/A"
+    },
   },
   {
-    accessorKey: "status",
-    header: "Status"
+    accessorKey: "campaign_id",
+    header: "Campaign ID",
+  },
+  {
+    accessorKey: "sip_provider_id",
+    header: "SIP Provider ID",
+  },
+  {
+    accessorKey: "created_at",
+    header: "Created At",
+    cell: ({ getValue }) => {
+      const createdAt = new Date(getValue<string>())
+      return createdAt.toLocaleString()
+    },
   },
   {
     id: "actions",
     header: "Action",
     cell: ({ row }) => {
-      const recentCalls = row.original
+      const agent = row.original
 
       return (
         <DropdownMenu>
@@ -96,15 +112,19 @@ export const columns: ColumnDef<CallHistory>[] = [
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(recentCalls.csnumber)}
+              onClick={() => navigator.clipboard.writeText(agent.ag_name)}
             >
-              Copy Customer Number
+              Copy Agent Name
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => navigator.clipboard.writeText(agent.sip_name)}
+            >
+              Copy SIP Name
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
     },
   },
-
 ]
 

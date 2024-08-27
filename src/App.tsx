@@ -12,6 +12,8 @@ import SetUp from './pages/admin/SetUp'
 import { jwtDecode } from 'jwt-decode';
 import { useEffect, useState } from 'react'
 import { JWTTokenTypes } from './providers/types/jwttypes'
+import Agents from './pages/admin/components/Agents'
+import SipProviderComponent from './pages/admin/components/SipProviderComponent'
 
 function App() {
   const [userRole, setUserRole] = useState("admin");
@@ -35,6 +37,8 @@ function App() {
           <Route path='manage' element={<ProtectedRoute role={userRole} allowedRoles={['admin']} />} >
             <Route index element={<AdminHome />} />
             <Route path='set-up' element={<SetUp />} />
+            <Route path="agents" element={<Agents />} />
+            <Route path="sip-provider" element={<SipProviderComponent />} />
           </Route>
           <Route path='agent' element={<ProtectedRoute role={userRole} allowedRoles={['admin', 'supervisor', 'agent']} />} >
             <Route index element={<AgentHome />} />

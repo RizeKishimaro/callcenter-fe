@@ -117,7 +117,7 @@ const RecentCalls = () => {
 
   return (
     <div className='p-5'>
-      <DataTable columns={columns} data={data} />
+      <DataTable columns={columns} data={data} filterColumn={"agnumber"} />
     </div>
   )
 }
