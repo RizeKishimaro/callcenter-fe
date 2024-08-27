@@ -1,8 +1,8 @@
+import axios from "axios";
 import axiosInstance from "../../providers/axiosClient";
 
 // Define the API endpoints
-const PROFILE_URL = "/auth/profile";
-const LOGIN_URL = `${import.meta.env.VITE_APP_BACKEND_URL}agent/login`;
+const PROFILE_URL = "/profile";
 
 // Get the user profile (protected endpoint)
 export const getProfile = async () => {
@@ -10,19 +10,23 @@ export const getProfile = async () => {
   return response.data;
 };
 
+export const createSipProvider = async () => {
+  const response = await axiosInstance.post()
+}
+
 // Login function to authenticate the user
 
-export const login = async (credentials: { sipUsername: string; password: string }) => {
+export const login = async (credentials: { sipUsername: string; password: string, loginUrl: string; }) => {
   try {
-    const response = await axiosInstance.post(LOGIN_URL, {
-      sipName: credentials.sipUsername,
-      password: credentials.password,
-    });
+    const requestBody = credentials.loginUrl.includes("user/login")
+      ? { email: credentials.sipUsername, password: credentials.password }
+      : { sipName: credentials.sipUsername, password: credentials.password };
 
-    console.log(response);
+    const response = await axios.post(credentials.loginUrl, requestBody);
+
     return response.data;
   } catch (error) {
     console.error("Login error:", error);
-    throw error; // You might want to handle this error further in your UI
+    throw error;
   }
 };

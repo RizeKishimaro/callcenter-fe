@@ -4,6 +4,10 @@ import { UserAgent } from "sip.js";
 import { useNavigate } from "react-router-dom";
 import { PhoneCall, PhoneForwarded, PhoneOff } from "lucide-react";
 import { Input } from "../../components/ui/input";
+<<<<<<< HEAD
+=======
+import { useSelector } from "react-redux";
+>>>>>>> ad2f658a9b73e154a520f00a54c4dfd4f5d5bc29
 import { useDecrypt } from "../../store/hooks/useDecrypt";
 
 const AgentHome = () => {
@@ -24,6 +28,7 @@ const AgentHome = () => {
   const agentAccount = {
     sipUsername: useDecrypt(localStorage.getItem("sipUsername")),
     sipPassword: useDecrypt(localStorage.getItem("password"))
+
   }
 
   useEffect(() => {
