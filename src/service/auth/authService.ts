@@ -15,11 +15,7 @@ export const createSipProvider = async() => {
 }
 
 // Login function to authenticate the user
-export const login = async (credentials: {
-  sipUsername: string;
-  password: string;
-  loginUrl: string;
-}) => {
+export const login = async (credentials: { sipUsername: string; password: string,loginUrl: string; }) => {
   try {
     const requestBody = credentials.loginUrl.includes("user/login")
       ? { email: credentials.sipUsername, password: credentials.password }

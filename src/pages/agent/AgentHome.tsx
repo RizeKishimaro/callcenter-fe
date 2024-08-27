@@ -4,6 +4,8 @@ import { UserAgent } from "sip.js";
 import { useNavigate } from "react-router-dom";
 import { PhoneCall, PhoneForwarded, PhoneOff } from "lucide-react";
 import { Input } from "../../components/ui/input";
+import { useSelector } from "react-redux";
+import { useDecrypt } from "../../store/hooks/useDecrypt";
 
 const AgentHome = () => {
 
@@ -18,9 +20,10 @@ const AgentHome = () => {
   const [providerAddress, setProviderAddress] = useState("192.168.130.20")
   const navigate = useNavigate();
 
+
   const agentAccount = {
-    sipUsername: "agt0088",
-    sipPassword: "password"
+    sipUsername: useDecrypt(localStorage.getItem("sipUsername") || ""),
+    sipPassword: useDecrypt(localStorage.getItem("password") || "")
   }
   useEffect(() => {
     const server = `${import.meta.env.VITE_APP_WEBSOCKET_HOST}:${import.meta.env.VITE_APP_WEBSOCKET_PORT}/ws`;

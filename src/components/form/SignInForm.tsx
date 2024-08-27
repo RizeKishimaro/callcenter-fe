@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { login } from '../../service/auth/authService';
 import { useDispatch } from 'react-redux';
+
 import { setToken, setUserInfo } from '../../store/reducers/authReducer';
 import { useEncrypt } from '../../store/hooks/useEncrypt';
 import { useToast } from '../ui/use-toast';
@@ -33,6 +34,10 @@ const SignInForm = () => {
       toast({
         description: "Successfully login!"
       })
+
+      const encryptedPassword = useEncrypt(form.getValues("password"));
+      const encryptedSipUsername = useEncrypt(form.getValues('sipUsername'))
+      dispatch(setUserInfo({ sipUsername: encryptedSipUsername, password: encryptedPassword }))
       navigate("/dashboard/agent")
     },
     onError: (error) => {
