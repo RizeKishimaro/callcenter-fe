@@ -8,8 +8,7 @@ import { useDispatch } from 'react-redux';
 import { nextStep, setIvrTree } from '../../store/reducers/setupReducer';
 import Tree from '../Tree';
 
-
-const uploadedIvrList: string[] = ['intro', 'greeting', 'option', 'Message 1', 'Message 2'];
+const uploadedIvrList: string[] = ['greeting', 'intro', 'option', 'mm', 'eng', "mm_above3years", "mm_under3years", "mm_3AboveKeyMessage", "mm_3UnderKeyMessage", "mm_CallToAgent", "eng_above3years", "eng_under3years", "eng_3AboveKeyMessage", "eng_3UnderKeyMessage", "eng_CallToAgent"];
 
 const IvrTreeForm = () => {
   const [tree, setTree] = useState<IvrTreeNodeType | null>(null);
@@ -27,7 +26,7 @@ const IvrTreeForm = () => {
         label: label,
         type: type,
         parentId: null,
-        branch: '',
+        branch: 1,
         children: [],
       };
       setTree(newNode);
@@ -35,12 +34,13 @@ const IvrTreeForm = () => {
     } else {
       const addNodeRecursive = (node: IvrTreeNodeType) => {
         if (node.id === parentId) {
-          const newNode = {
+          const newBranchNumber = node.children.length + 1;
+          const newNode: IvrTreeNodeType = {
             id: nextId,
-            label: label,
+            label: type === 'queue' ? "Queue" : label,
             type: type,
             parentId: node.id,
-            branch: node.branch,
+            branch: newBranchNumber,
             children: [],
           };
           node.children.push(newNode);
@@ -59,7 +59,7 @@ const IvrTreeForm = () => {
     setParentId(1);
     setLabel("");
     setType("");
-    setIsLabelSelectDisabled(true);  // Disable third select after adding a node
+    setIsLabelSelectDisabled(true);
   };
 
   const removeNode = (nodeId: number) => {
@@ -77,7 +77,7 @@ const IvrTreeForm = () => {
     }
   };
 
-  const getAllNodes = (node: IvrTreeNodeType | null, nodes: { id: number; label: string }[] = []) => {
+  const getAllNodes = (node: IvrTreeNodeType | null, nodes: { id: number; label: string }[] = []): { id: number; label: string }[] => {
     if (!node) return nodes;
 
     nodes.push({ id: node.id, label: node.label });
@@ -97,12 +97,46 @@ const IvrTreeForm = () => {
     </SelectItem>
   ));
 
+  const findNearestExtensionParent = (node: IvrTreeNodeType, tree: IvrTreeNodeType): IvrTreeNodeType | null => {
+    const findParent = (currentNode: IvrTreeNodeType, parentId: number | null): IvrTreeNodeType | null => {
+      if (!parentId) return null;
+
+      const parent = findNodeById(tree, parentId);
+      if (parent && parent.type === 'extension') {
+        return parent;
+      } else if (parent) {
+        return findParent(parent, parent.parentId);
+      }
+      return null;
+    };
+
+    return findParent(node, node.parentId);
+  };
+
+  const findNodeById = (node: IvrTreeNodeType, id: number): IvrTreeNodeType | null => {
+    if (node.id === id) return node;
+    for (const child of node.children) {
+      const found = findNodeById(child, id);
+      if (found) return found;
+    }
+    return null;
+  };
+
   const transformTreeToDto = (node: IvrTreeNodeType, campaignId: number) => {
+    let adjustedParentId = node.parentId;
+
+    if (node.type === 'queue') {
+      const nearestExtensionParent = findNearestExtensionParent(node, tree as IvrTreeNodeType);
+      if (nearestExtensionParent) {
+        adjustedParentId = nearestExtensionParent.id;
+      }
+    }
+
     let ivrDtos = [{
       name: node.label,
       campaignId: campaignId,
-      parentId: node.parentId || undefined,
-      branch: node.branch,
+      parentId: adjustedParentId ?? undefined,
+      branch: node.branch || 1,
       type: node.type,
       value: node.label,
     }];
@@ -115,7 +149,6 @@ const IvrTreeForm = () => {
   };
 
   const handleSubmitIvrTree = () => {
-    console.log(tree);
     if (tree) {
       const campaignId = 1;
       const ivrDtos = transformTreeToDto(tree, campaignId);
@@ -127,19 +160,15 @@ const IvrTreeForm = () => {
 
   const handleTypeChange = (value: string) => {
     setType(value);
-
-    console.log("value : ", value)
-
     if (value === 'extension' || value === 'playback') {
-      setIsLabelSelectDisabled(false);  // Enable third select box
+      setIsLabelSelectDisabled(false);
     } else {
-      setIsLabelSelectDisabled(true);  // Disable third select box for queue
-      setLabel("");  // Clear label since it's not needed for queue
+      setIsLabelSelectDisabled(true);
+      setLabel("");
     }
-    console.log("true or false : ", isLabelSelectDisabled)
   };
 
-  const isParentSelectDisabled = !tree;  // Disable Parent IVR select if tree is empty
+  const isParentSelectDisabled = !tree;
 
   return (
     <Card className="w-[80%] overflow-auto">
@@ -185,7 +214,7 @@ const IvrTreeForm = () => {
               <Select
                 onValueChange={setLabel}
                 value={label}
-                disabled={isLabelSelectDisabled}  // Disable based on state
+                disabled={isLabelSelectDisabled}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Please select value" />

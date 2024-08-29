@@ -3,4 +3,6 @@ export interface IvrTreeNodeType {
     label: string;
     parentId: number | null;
     children: IvrTreeNodeType[];
+    branch: number | string;
+    type: string;
   }
