@@ -14,12 +14,14 @@ import { useDispatch } from 'react-redux';
 import { setToken, setUserInfo } from '../../store/reducers/authReducer';
 import { useEncrypt } from '../../store/hooks/useEncrypt';
 import { useToast } from '../ui/use-toast';
+import { useState } from 'react';
 
 const SignInForm = () => {
 
   const navigate = useNavigate(); // For navigation after login
   const dispatch = useDispatch();
   const { toast } = useToast()
+  const [managable, setManageable] = useState<boolean>(false);
   const form = useForm<signInSchemaType>({
     resolver: zodResolver(signInSchema), defaultValues: {
       sipUsername: "",
@@ -38,7 +40,11 @@ const SignInForm = () => {
       const encryptedPassword = useEncrypt(form.getValues("password"));
       const encryptedSipUsername = useEncrypt(form.getValues('sipUsername'))
       dispatch(setUserInfo({ sipUsername: encryptedSipUsername, password: encryptedPassword }))
-      navigate("/dashboard/agent")
+      if(managable) {
+        navigate("/dashboard/manage")
+      } else {
+        navigate("/dashboard/agent")
+      }
     },
     onError: (error) => {
       if (error?.response?.data?.statusCode == 400 || error?.response?.data?.statusCode == 401) {
@@ -66,6 +72,8 @@ const SignInForm = () => {
     const loginUrl = sipUsername.includes('@')
       ? `${import.meta.env.VITE_APP_BACKEND_URL}user/login`
       : `${import.meta.env.VITE_APP_BACKEND_URL}agent/login`;
+
+    setManageable(sipUsername.includes('@') ? true : false)
 
     mutate({ sipUsername, password, loginUrl })
   }

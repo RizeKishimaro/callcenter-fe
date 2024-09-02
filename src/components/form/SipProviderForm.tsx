@@ -1,4 +1,3 @@
-import React from 'react'
 import { useForm } from 'react-hook-form'
 import { sipProviderSchemaType, sipProviderSchema } from '../../providers/schema/zodSchema'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -10,13 +9,46 @@ import { Input } from '../ui/input'
 import { MultiSelect } from '../multi-select'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '../ui/select'
 import { Button } from '../ui/button'
+import { useMutation } from '@tanstack/react-query'
+import { SipProviderType } from '../../providers/types/sipProviderType'
+import { createSipProvider } from '../../service/sip/sipProviderService'
+import { createCampaign } from '../../service/sip/campaignService'
+import { useToast } from '../ui/use-toast'
 
 const SipProviderForm = () => {
   const dispatch = useDispatch();
   const currentStep = useSelector((state: any) => state.setup.currentStep);
-  const sipProvider = useSelector((state: any) => state.setup.sipProvider);
+  const { toast } = useToast();
+
+  const { mutate } = useMutation({
+    mutationFn: ({ provider_number, name, codecs, transport, host, extension }: SipProviderType) => {
+      const formattedCodecs = codecs.join(',');
+      const body = { provider_number, name, codecs: formattedCodecs, transport, host, extension }
+      createSipProvider(body);
+    },
+    onSuccess: (data) => {
+      dispatch(nextStep());
+    },
+    onError: (error) => {
+      if (error?.response?.data?.statusCode == 400 || error?.response?.data?.statusCode == 422) {
+        toast({
+          variant: "destructive",
+          title: "Error!",
+          description: `Error: ${error?.response?.data?.message}`
+        })
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error!",
+          description: "Interval Server Error. Please tell your system adminstrator..."
+        })
+      }
+    }
+  })
+
   const form = useForm<sipProviderSchemaType>({
     resolver: zodResolver(sipProviderSchema), defaultValues: {
+      provider_number: "",
       name: "",
       codecs: [],
       transport: "UDP",
@@ -26,12 +58,11 @@ const SipProviderForm = () => {
   })
 
   function onSubmit(values: z.infer<typeof sipProviderSchema>) {
-    console.log("Sip provider form value : ", values)
+    const { provider_number, name, codecs, transport, host, extension } = values;
+    console.log("values : ", values)
     dispatch(setSipProvider(values))
-    dispatch(nextStep());
-
-    console.log(sipProvider)
     console.log("Current Step : ", currentStep)
+    mutate({ provider_number, name, codecs, transport, host, extension })
   }
   return (
     <Card className='w-[80%]'>
@@ -55,29 +86,48 @@ const SipProviderForm = () => {
                 <FormMessage />
               </FormItem>
             )} />
-            <FormField control={form.control} name='codecs' render={({ field }) => (
+            <FormField control={form.control} name='provider_number' render={({ field }) => (
               <FormItem>
                 <FormLabel>
-                  Codecs
+                  Sip Phone No:
                 </FormLabel>
                 <FormControl>
-                  <MultiSelect options={[
-                    { label: 'ulaw', value: 'ulaw' },
-                    { label: 'alaw', value: 'alaw' },
-                    { label: 'gsm', value: 'gsm' },
-                    { label: 'g726', value: 'g726' },
-                    { label: 'g722', value: 'g722' },
-                    { label: 'g729', value: 'g729' },
-                    { label: 'speex', value: 'speex' },
-                    { label: 'ilbc', value: 'ilbc' },
-                    { label: 'opus', value: 'opus' }
-                  ]}
-                    placeholder="Select avaliable codecs"
-                    variant="inverted" {...field} />
+                  <Input placeholder='Enter your sip phone number' {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )} />
+            <FormField
+              control={form.control}
+              name="codecs"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Codecs</FormLabel>
+                  <FormControl>
+                    <MultiSelect
+                      options={[
+                        { label: 'ulaw', value: 'ulaw' },
+                        { label: 'alaw', value: 'alaw' },
+                        { label: 'gsm', value: 'gsm' },
+                        { label: 'g726', value: 'g726' },
+                        { label: 'g722', value: 'g722' },
+                        { label: 'g729', value: 'g729' },
+                        { label: 'speex', value: 'speex' },
+                        { label: 'ilbc', value: 'ilbc' },
+                        { label: 'opus', value: 'opus' },
+                      ]}
+                      defaultValue={field.value}  // Ensure this is passed correctly
+                      onValueChange={field.onChange}  // Correct handler for change
+                      placeholder="Select frameworks"
+                      variant="inverted"
+                      animation={2}
+                      maxCount={3}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="transport"
@@ -119,7 +169,7 @@ const SipProviderForm = () => {
                 <FormMessage />
               </FormItem>
             )} />
-            <FormField control={form.control} name="extension" render={({field}) => (
+            <FormField control={form.control} name="extension" render={({ field }) => (
               <FormItem>
                 <FormLabel>Extension</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -136,7 +186,7 @@ const SipProviderForm = () => {
               </FormItem>
             )} />
             <div className="w-full text-end">
-            <Button type='submit' className='px-10'>Create</Button>
+              <Button type='submit' className='px-10'>Create</Button>
             </div>
           </form>
         </Form>

@@ -11,16 +11,17 @@ import SetUp from './pages/admin/SetUp'
 import { jwtDecode } from 'jwt-decode';
 import { useEffect, useState } from 'react'
 import { JWTTokenTypes } from './providers/types/jwttypes'
+import { Toaster } from './components/ui/toaster'
 
 function App() {
   const [userRole, setUserRole] = useState("admin");
   const navigate = useNavigate();
   useEffect(() => {
-    const token = localStorage.getItem("access_token");
+    const token = localStorage.getItem("access_token") || "";
     if (!token) {
       navigate("/")
     }
-    const payload: JWTTokenTypes = jwtDecode(token);
+    const payload: JWTTokenTypes = jwtDecode(token) || "";
     setUserRole("admin")
 
   }, [])
@@ -29,6 +30,7 @@ function App() {
     <div>
       <Routes>
         <Route path='/' element={<Home />} />
+        {/* <Route path='/setup' element={<Home />} /> */}
         <Route path='/dashboard' element={<DashboardLayout userRole={userRole} />} >
           <Route path='manage' element={<ProtectedRoute role={userRole} allowedRoles={['admin']} />} >
             <Route index element={<AdminHome />} />
@@ -42,6 +44,7 @@ function App() {
         <Route path='/sign-in' element={<SignIn />} />
         <Route path='*' element={<Error />} />
       </Routes>
+      <Toaster />
     </div>
   )
 }

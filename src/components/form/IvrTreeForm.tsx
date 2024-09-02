@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { IvrTreeNodeType } from '../../providers/types/IvrTreeNodeTypes';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -7,6 +7,12 @@ import { Separator } from '../ui/separator';
 import { useDispatch } from 'react-redux';
 import { nextStep, setIvrTree } from '../../store/reducers/setupReducer';
 import Tree from '../Tree';
+import { useToast } from '../ui/use-toast';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { getAllCampaigns } from '../../service/sip/campaignService';
+import { AxiosError } from 'axios';
+import { BulkIvrType } from '../../providers/types/ivrType';
+import { bulkCreateIvr } from '../../service/ivr/ivrService';
 
 const uploadedIvrList: string[] = ['greeting', 'intro', 'option', 'mm', 'eng', "mm_above3years", "mm_under3years", "mm_3AboveKeyMessage", "mm_3UnderKeyMessage", "mm_CallToAgent", "eng_above3years", "eng_under3years", "eng_3AboveKeyMessage", "eng_3UnderKeyMessage", "eng_CallToAgent"];
 
@@ -17,7 +23,45 @@ const IvrTreeForm = () => {
   const [label, setLabel] = useState<string>("");
   const [type, setType] = useState<string>("");
   const [nextId, setNextId] = useState<number>(1);
+  const [campaignId, setCampaignId] = useState<number>(1);
   const [isLabelSelectDisabled, setIsLabelSelectDisabled] = useState<boolean>(true);
+  const { toast } = useToast();
+
+  const { data, isError, isLoading, error } = useQuery({
+    queryKey: ['Campaigns'],
+    queryFn: getAllCampaigns,
+  });
+
+  const handleErrorToast = useCallback((error: Error) => {
+    const errorMessage = error.response?.data?.message || "Internal Server Error. Please tell your system administrator...";
+    toast({
+      variant: "destructive",
+      title: "Error!",
+      description: `Error: ${errorMessage}`,
+    });
+  }, [toast]);
+
+  const { mutate } = useMutation({
+    mutationFn: ({ ivrs, campaignId }: { ivrs: BulkIvrType; campaignId: number }) => {
+      console.log("Hello world!")
+      return bulkCreateIvr({ ivrs, campaignId });
+    },
+    onSuccess: () => {
+      toast({
+        description: "Successfully uploaded IVR file!",
+      });
+      dispatch(nextStep());
+    },
+    onError: handleErrorToast,
+  });
+
+  const campaignLists = useMemo(() => data?.data || [], [data]);
+
+  useEffect(() => {
+    if (isError && error instanceof AxiosError) {
+      handleErrorToast(error);
+    }
+  }, [isLoading, isError, error, handleErrorToast]);
 
   const addNode = () => {
     if (!tree) {
@@ -85,17 +129,25 @@ const IvrTreeForm = () => {
     return nodes;
   };
 
-  const ivrTreeParentOptions = getAllNodes(tree).map((node) => (
-    <SelectItem key={node.id} value={node.id.toString()}>
-      {`${node.id}: ${node.label}`}
-    </SelectItem>
-  ));
+  const ivrTreeParentOptions = useMemo(() => {
+    if (!tree) return [];
+    return (
+      getAllNodes(tree).map((node) => (
+        <SelectItem key={node.id} value={node.id.toString()}>
+          {`${node.id}: ${node.label.replace(/[_-]/g, ' ')}`}
+        </SelectItem>
+      ))
+    )
+  }, [tree]);
 
-  const ivrOptionLists = uploadedIvrList.map((name, index) => (
-    <SelectItem key={index} value={name}>
-      {name}
-    </SelectItem>
-  ));
+  const ivrOptionLists = useMemo(() => uploadedIvrList.map((name, index) => {
+    const displayName = name.replace(/[_-]/g, ' ');
+    return (
+      <SelectItem key={index} value={name}>
+        {displayName}
+      </SelectItem>
+    );
+  }), []);
 
   const findNearestExtensionParent = (node: IvrTreeNodeType, tree: IvrTreeNodeType): IvrTreeNodeType | null => {
     const findParent = (currentNode: IvrTreeNodeType, parentId: number | null): IvrTreeNodeType | null => {
@@ -123,19 +175,20 @@ const IvrTreeForm = () => {
   };
 
   const transformTreeToDto = (node: IvrTreeNodeType, campaignId: number) => {
-    let adjustedParentId = node.parentId;
+    // let adjustedParentId = node.parentId;
 
-    if (node.type === 'queue') {
-      const nearestExtensionParent = findNearestExtensionParent(node, tree as IvrTreeNodeType);
-      if (nearestExtensionParent) {
-        adjustedParentId = nearestExtensionParent.id;
-      }
-    }
+    // if (node.type === 'queue') {
+    //   const nearestExtensionParent = findNearestExtensionParent(node, tree as IvrTreeNodeType);
+    //   if (nearestExtensionParent) {
+    //     adjustedParentId = nearestExtensionParent.id;
+    //   }
+    // }
 
     let ivrDtos = [{
+      id: node.id,
       name: node.label,
       campaignId: campaignId,
-      parentId: adjustedParentId ?? undefined,
+      parentId: node.parentId ?? undefined,
       branch: node.branch || 1,
       type: node.type,
       value: node.label,
@@ -150,22 +203,16 @@ const IvrTreeForm = () => {
 
   const handleSubmitIvrTree = () => {
     if (tree) {
-      const campaignId = 1;
-      const ivrDtos = transformTreeToDto(tree, campaignId);
-      console.log(ivrDtos);
+      const ivrs = transformTreeToDto(tree, campaignId);
+      console.log(ivrs);
+      mutate({ ivrs, campaignId })
       dispatch(setIvrTree(tree));
-      dispatch(nextStep());
     }
   };
 
   const handleTypeChange = (value: string) => {
     setType(value);
-    if (value === 'extension' || value === 'playback') {
-      setIsLabelSelectDisabled(false);
-    } else {
-      setIsLabelSelectDisabled(true);
-      setLabel("");
-    }
+    setIsLabelSelectDisabled(value !== 'extension' && value !== 'playback');
   };
 
   const isParentSelectDisabled = !tree;
@@ -174,11 +221,24 @@ const IvrTreeForm = () => {
     <Card className="w-[80%] overflow-auto">
       <CardHeader className='text-center space-y-5'>
         <CardTitle>Ivr Tree Setup</CardTitle>
-        <CardDescription>Step: 3 Setup your uploaded ivr file with tree here!</CardDescription>
+        <CardDescription>Step: 4 Setup your uploaded ivr file with tree here!</CardDescription>
       </CardHeader>
       <CardContent className='overflow-auto'>
         <div className='flex md:flex-row flex-col h-full justify-between items-center mt-5 lg:mb-12'>
           <div className="flex gap-x-3 w-2/3">
+            <div className='flex-1'>
+              <label>Campaign</label>
+              <Select onValueChange={(value) => setCampaignId(parseInt(value, 10))} value={campaignId.toString()}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Please select campaign" />
+                </SelectTrigger>
+                <SelectContent>
+                  {campaignLists?.map((campaign: any, index: number) => (
+                    <SelectItem key={index} value={campaign.id} >{campaign.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className='flex-1'>
               <label>Parent IVR</label>
               <Select onValueChange={(value) => setParentId(parseInt(value, 10))} value={parentId.toString()} disabled={isParentSelectDisabled}>

@@ -26,15 +26,28 @@ const codecsSchema = z.array(
 // Define the transport schema
 const transportSchema = z.enum(["UDP", "TCP", "WS", "WSS"]);
 
+const campaignStrategy = z.enum(["rrmemory", "ringall", "fewestcalls", "random", "lastrecent", "rrordered"]);
+
 // Define the extent schema
 const extensionSchema = z.enum(["inbound", "outbound"]);
 
 export const sipProviderSchema = z.object({
   name: z.string().min(1, "Name is required"),
+  provider_number: z
+  .string({ message: "Phone number field is required!" })
+  .min(4, "Phone number must be minimum 4 digits")
+  .max(12, "Phone number must be maximum 12 digits"),
   codecs: codecsSchema,
   transport: transportSchema,
   host: z.string(),
   extension: extensionSchema,
+});
+
+export const campaginSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  prefix: z.string().min(3, "At least 3 characters").max(10, "Maximum 10 characters are allowed."),
+  concurrentlimit: z.number().min(1, "Concurrent Limit is required!."),
+  strategy: campaignStrategy,
 });
 
 // Define file type for IVR file upload
@@ -60,6 +73,8 @@ export type ivrTreeSchemaType = z.infer<typeof ivrTreeSchema>;
 
 export type sipProviderSchemaType = z.infer<typeof sipProviderSchema>;
 
+export type campaignSchemaType = z.infer<typeof campaginSchema>;
+
 export type signInSchemaType = z.infer<typeof signInSchema>;
 
-export type ivrFileUploadSchemaType = z.infer<typeof ivrFileUploadSchema>
+export type ivrFileUploadSchemaType = z.infer<typeof ivrFileUploadSchema>;

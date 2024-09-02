@@ -23,10 +23,10 @@ const SipInfo = (props: Props) => {
               <RefreshCcw />
             </div>
             <h3 className='font-thin text-md'>Telecom: Atom</h3>
-            <h2 className='font-light text-3xl tracking-wider'>09 979 778 887</h2>
+            <h2 className='font-light xl:text-3xl lg:text-xl text-md tracking-wider'>09 979 778 887</h2>
           </div>
           <div className="flex-1 flex flex-col gap-y-3">
-            <h1 className='font-thin text-5xl'>{timeNow}</h1>
+            <h1 className='font-thin xl:text-5xl lg:text-2xl text-xl'>{timeNow}</h1>
             <h2 className='font-semibold text-3xl tracking-wider'>{monthNow}</h2>
             <h3 className='font-light text-xl tracking-wider'>{dayNow} {dateNow}th {yearNow}</h3>
           </div>
