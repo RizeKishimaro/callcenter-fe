@@ -102,7 +102,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userRole }) => {
     }
   }, [userRole, location.pathname, navigate]);
 
-  if (isLoading) return <Loading />;
+  //if (isLoading) return <Loading />;
 
   return (
     <>
