@@ -88,7 +88,7 @@ export const columns: ColumnDef<Agent>[] = [
         header: "Campaign",
         cell: ({ row }) => {
             const campaign: Campaign = row.getValue('Campaign')
-            const campaignName = campaign.name;
+            const campaignName = campaign?.name;
             return <div className="font-medium">{campaignName}</div>
         }
     },
@@ -97,7 +97,7 @@ export const columns: ColumnDef<Agent>[] = [
         header: "Sip Provider",
         cell: ({ row }) => {
             const sipProvider: SipProvider = row.getValue('SipProvider')
-            const sipProviderName = sipProvider.name;
+            const sipProviderName = sipProvider?.name;
             return <div className="font-medium">{sipProviderName}</div>
         }
     },
@@ -125,7 +125,6 @@ export const columns: ColumnDef<Agent>[] = [
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align='start'>
                         <DropdownMenuItem>Delete</DropdownMenuItem>
-                        <DropdownMenuItem>Update</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             )

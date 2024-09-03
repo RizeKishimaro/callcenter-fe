@@ -6,6 +6,8 @@ import { useToast } from "../../../components/ui/use-toast";
 import { DataTable } from "../../../components/data-table";
 import { columns } from "./columns";
 import { PaginationState, SortingState } from "@tanstack/react-table";
+import { Button } from "../../../components/ui/button";
+import { Link } from "react-router-dom";
 
 const Agents = () => {
   const { toast } = useToast();
@@ -38,7 +40,12 @@ const Agents = () => {
   return (
     <section className='py-10'>
       <div className='container'>
-        <h1 className='mb-6 text-3xl font-bold'>All Agents</h1>
+      <div className="flex w-full justify-between">
+          <h1 className='mb-6 text-3xl font-bold'>All Agents</h1>
+          <Button>
+            <Link to='/dashboard/manage/agent/create'>Create Agent</Link>
+          </Button>
+        </div>
         {!isLoading && !isError && isSuccess && (
           <DataTable
             columns={columns}

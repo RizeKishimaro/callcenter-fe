@@ -23,7 +23,7 @@ import { Nav } from './Nav';
 const roleBasedAccess = {
     admin: [
         { title: 'Dashboard', label: '', icon: LayoutDashboard, variant: 'ghost', href: '/dashboard/manage' },
-        { title: 'Business', label: '', icon: Building2, variant: 'ghost', href: '/dashboard/manage/set-up' },
+        { title: 'SetUp', label: '', icon: Building2, variant: 'ghost', href: '/dashboard/manage/set-up' },
         { title: 'IVR', label: '', icon: AudioLines, variant: 'ghost', href: '/dashboard/manage/ivr' },
         { title: 'Agent', label: '', icon: Users2, variant: 'ghost', href: '/dashboard/manage/agent' },
         { title: 'Campaign', label: '', icon: ListEnd, variant: 'ghost', href: '/dashboard/manage/admin/campaign' },
@@ -34,7 +34,7 @@ const roleBasedAccess = {
         { title: 'User', label: '', icon: UserCheck, variant: 'ghost', href: '/dashboard/manage/admin' },
         { title: 'Audio Store', label: '', icon: FolderClock, variant: 'ghost', href: '/dashboard/manage/audio-store' },
         { title: 'Settings', label: '', icon: Settings, variant: 'ghost', href: '/dashboard/manage/settings' },
-        { title: 'Sip(provider)', label: '', icon: BetweenHorizonalEnd, variant: 'ghost', href: '/dashboard/manage/sip-provider' },
+        { title: 'Sip(provider)', label: '', icon: BetweenHorizonalEnd, variant: 'ghost', href: '/dashboard/manage/admin/sip-provider' },
         { title: 'CRM', label: '', icon: HeartHandshake, variant: 'ghost', href: '/dashboard/manage/crm' },
     ],
     supervisor: [

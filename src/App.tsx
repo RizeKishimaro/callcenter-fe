@@ -4,17 +4,22 @@ import SignIn from './pages/auth/SignIn'
 import Home from './pages/Home'
 import DashboardLayout from './layouts/DashboardLayout'
 import ProtectedRoute from './providers/guards/ProtectedRoute'
-import AdminHome from './pages/admin/AdminHome'
+import AdminHome from './pages/manage/AdminHome'
 import AgentHome from './pages/agent/AgentHome'
 import RecentCalls from './pages/agent/RecentCalls'
-import SetUp from './pages/admin/SetUp'
+import SetUp from './pages/manage/SetUp'
 import { jwtDecode } from 'jwt-decode';
 import { useEffect, useState } from 'react'
 import { JWTTokenTypes } from './providers/types/jwttypes'
 import { Toaster } from './components/ui/toaster'
-import Agents from './pages/admin/agent/Agents'
-import User from './pages/admin/user/User'
-import Campaign from './pages/admin/campaign/Campaign'
+import Agents from './pages/manage/agent/Agents'
+import CreateAgent from './pages/manage/agent/CreateAgent'
+import User from './pages/manage/user/User'
+import Campaign from './pages/manage/campaign/Campaign'
+import CreateCampaign from './pages/manage/campaign/CreateCampaign'
+import SipProvider from './pages/manage/sip-provider/SipProvider'
+import CreateSipProvider from './pages/manage/sip-provider/CreateSipProvider'
+import AudioStore from './pages/manage/audio-store/AudioStore'
 
 function App() {
   const [userRole, setUserRole] = useState("admin");
@@ -38,11 +43,16 @@ function App() {
           <Route path='manage' element={<ProtectedRoute role={userRole} allowedRoles={['admin', 'supervisor']} />} >
             <Route index element={<AdminHome />} />
             <Route path='set-up' element={<SetUp />} />
+            <Route path='audio-store' element={<AudioStore />} />
             {/* both supervisor and admin can access this route"agent" how can I do? */}
             <Route path='agent' element={<Agents />} />
+            <Route path='agent/create' element={<CreateAgent />} />
             <Route path='admin' element={<ProtectedRoute role={userRole} allowedRoles={['admin', 'supervisor']} />}>
               <Route index element={<User />} />
               <Route path='campaign' element={<Campaign />} />
+              <Route path='campaign/create' element={<CreateCampaign />} />
+              <Route path='sip-provider' element={<SipProvider />} />
+              <Route path='sip-provider/create' element={<CreateSipProvider />} />
             </Route>
           </Route>
           <Route path='agent' element={<ProtectedRoute role={userRole} allowedRoles={['admin', 'supervisor', 'agent']} />} >
