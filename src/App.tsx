@@ -18,9 +18,10 @@ function App() {
   const [userRole, setUserRole] = useState("admin");
   const navigate = useNavigate();
   useEffect(() => {
-    const token = localStorage.getItem("access_token");
+    const token = localStorage.getItem("access_token") || null;
     if (!token) {
-      navigate("/")
+      navigate("/");
+      return;
     }
     const payload: JWTTokenTypes = jwtDecode(token);
     setUserRole("admin")
@@ -35,7 +36,7 @@ function App() {
           <Route path='manage' element={<ProtectedRoute role={userRole} allowedRoles={['admin']} />} >
             <Route index element={<AdminHome />} />
             <Route path='set-up' element={<SetUp />} />
-            <Route path="agents" element={<Agents />} />
+            <Route path="agent" element={<Agents />} />
             <Route path="sip-provider" element={<SipProviderComponent />} />
           </Route>
           <Route path='agent' element={<ProtectedRoute role={userRole} allowedRoles={['admin', 'supervisor', 'agent']} />} >

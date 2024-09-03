@@ -27,44 +27,26 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userRole }) => {
     setIsCollapsed(size <= navCollapsedSize);
   };
 
-  const { data, isLoading, isError, error } = useQuery({
-    queryKey: ['Profile'],
-    queryFn: () => getProfile(),
-    onSuccess: (data) => {
-      console.log(" The data from backend: ", data);
-    },
-    onError: (error) => {
-      console.log("ON ERROR : ", error);
-      if (error?.response?.data?.statusCode === 401) {
-        navigate('/sign-in');
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Error!",
-          description: `Error: ${error?.response?.data?.message}`,
-        });
-      }
-    },
-  });
 
-  useEffect(() => {
-    if (!isLoading && isError) {
-      if (error?.response?.data?.statusCode === 401) {
-        toast({
-          variant: "destructive",
-          title: "Error!",
-          description: `Please sign-in`,
-        });
-        navigate('/sign-in');
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Error!",
-          description: `Error: ${error?.response?.data?.message}`,
-        });
-      }
-    }
-  }, [isLoading, isError, error, navigate, toast]);
+
+  // useEffect(() => {
+  //   if (!isLoading && isError) {
+  //     if (error?.response?.data?.statusCode === 401) {
+  //       toast({
+  //         variant: "destructive",
+  //         title: "Error!",
+  //         description: `Please sign-in`,
+  //       });
+  //       navigate('/sign-in');
+  //     } else {
+  //       toast({
+  //         variant: "destructive",
+  //         title: "Error!",
+  //         description: `Error: ${error?.response?.data?.message}`,
+  //       });
+  //     }
+  //   }
+  // }, [isLoading, isError, error, navigate, toast]);
 
   useEffect(() => {
     const handleWindowResize = () => {
