@@ -26,12 +26,12 @@ const roleBasedAccess = {
         { title: 'Business', label: '', icon: Building2, variant: 'ghost', href: '/dashboard/manage/set-up' },
         { title: 'IVR', label: '', icon: AudioLines, variant: 'ghost', href: '/dashboard/manage/ivr' },
         { title: 'Agent', label: '', icon: Users2, variant: 'ghost', href: '/dashboard/manage/agent' },
-        { title: 'Campaign', label: '', icon: ListEnd, variant: 'ghost', href: '/dashboard/manage/campaign' },
+        { title: 'Campaign', label: '', icon: ListEnd, variant: 'ghost', href: '/dashboard/manage/admin/campaign' },
         { title: 'CDR', label: '', icon: ScrollText, variant: 'ghost', href: '/dashboard/manage/cdr' },
         { title: 'Log', label: '', icon: FileClock, variant: 'ghost', href: '/dashboard/manage/log' },
         { title: 'Call History', label: '', icon: History, variant: 'ghost', href: '/dashboard/manage/call-history' },
         { title: 'Recording', label: '', icon: CassetteTape, variant: 'ghost', href: '/dashboard/manage/recording' },
-        { title: 'User', label: '', icon: UserCheck, variant: 'ghost', href: '/dashboard/manage/user' },
+        { title: 'User', label: '', icon: UserCheck, variant: 'ghost', href: '/dashboard/manage/admin' },
         { title: 'Audio Store', label: '', icon: FolderClock, variant: 'ghost', href: '/dashboard/manage/audio-store' },
         { title: 'Settings', label: '', icon: Settings, variant: 'ghost', href: '/dashboard/manage/settings' },
         { title: 'Sip(provider)', label: '', icon: BetweenHorizonalEnd, variant: 'ghost', href: '/dashboard/manage/sip-provider' },
@@ -63,7 +63,7 @@ const Sidebar = ({ userRole, isCollapsed }: { userRole: string, isCollapsed: boo
             />
             <Separator />
             <Nav isCollapsed={isCollapsed} links={links} />
-            <Separator />
+            {/* <Separator /> */}
         </div>
     );
 };

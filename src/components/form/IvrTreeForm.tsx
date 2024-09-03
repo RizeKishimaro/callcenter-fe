@@ -43,7 +43,6 @@ const IvrTreeForm = () => {
 
   const { mutate } = useMutation({
     mutationFn: ({ ivrs, campaignId }: { ivrs: BulkIvrType; campaignId: number }) => {
-      console.log("Hello world!")
       return bulkCreateIvr({ ivrs, campaignId });
     },
     onSuccess: () => {

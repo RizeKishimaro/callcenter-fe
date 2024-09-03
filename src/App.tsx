@@ -12,6 +12,9 @@ import { jwtDecode } from 'jwt-decode';
 import { useEffect, useState } from 'react'
 import { JWTTokenTypes } from './providers/types/jwttypes'
 import { Toaster } from './components/ui/toaster'
+import Agents from './pages/admin/agent/Agents'
+import User from './pages/admin/user/User'
+import Campaign from './pages/admin/campaign/Campaign'
 
 function App() {
   const [userRole, setUserRole] = useState("admin");
@@ -21,7 +24,7 @@ function App() {
     if (!token) {
       navigate("/")
     }
-    const payload: JWTTokenTypes = jwtDecode(token) || "";
+    // const payload: JWTTokenTypes = jwtDecode(token) || "";
     setUserRole("admin")
 
   }, [])
@@ -32,9 +35,15 @@ function App() {
         <Route path='/' element={<Home />} />
         {/* <Route path='/setup' element={<Home />} /> */}
         <Route path='/dashboard' element={<DashboardLayout userRole={userRole} />} >
-          <Route path='manage' element={<ProtectedRoute role={userRole} allowedRoles={['admin']} />} >
+          <Route path='manage' element={<ProtectedRoute role={userRole} allowedRoles={['admin', 'supervisor']} />} >
             <Route index element={<AdminHome />} />
             <Route path='set-up' element={<SetUp />} />
+            {/* both supervisor and admin can access this route"agent" how can I do? */}
+            <Route path='agent' element={<Agents />} />
+            <Route path='admin' element={<ProtectedRoute role={userRole} allowedRoles={['admin', 'supervisor']} />}>
+              <Route index element={<User />} />
+              <Route path='campaign' element={<Campaign />} />
+            </Route>
           </Route>
           <Route path='agent' element={<ProtectedRoute role={userRole} allowedRoles={['admin', 'supervisor', 'agent']} />} >
             <Route index element={<AgentHome />} />

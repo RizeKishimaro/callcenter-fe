@@ -1,9 +1,25 @@
+import { SortingState } from "@tanstack/react-table";
 import axiosInstance from "../../providers/axiosClient";
 
 const CAMPAIGN_URL = "campaign";
 
-export const getAllCampaigns = async () => {
-  const response = await axiosInstance.get(CAMPAIGN_URL);
+export const getAllCampaigns = async (
+  pageIndex: number = 0,
+  pageSize: number = 10,
+  sorting: SortingState
+) => {
+  const sortBy = sorting.length > 0 ? sorting[0].id : "id"; // Default sort by 'id'
+  const sortOrder =
+    sorting.length > 0 ? (sorting[0].desc ? "desc" : "asc") : "desc"; // Default to ascending
+
+  const response = await axiosInstance.get(CAMPAIGN_URL, {
+    params: {
+      limit: pageSize,
+      page: pageIndex+1,
+      sortField: sortBy,
+      sortType: sortOrder,
+    },
+  });
   return response.data;
 };
 

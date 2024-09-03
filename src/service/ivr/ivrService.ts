@@ -25,7 +25,6 @@ export const bulkCreateIvr = async ({
   ivrs: BulkIvrType; // Ensure this type matches BulkIvrType
   campaignId: number;
 }) => {
-  console.log("I'm over here")
   const response = await axiosInstance.post(
     `${IVR_URL}/bulk-create/${campaignId}`,
     {
