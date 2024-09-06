@@ -28,7 +28,7 @@ export const bulkCreateIvr = async ({
   const response = await axiosInstance.post(
     `${IVR_URL}/bulk-create/${campaignId}`,
     {
-      ivrs
+      ivrs,
     }
   );
   return response.data;
@@ -40,6 +40,11 @@ export const uploadIvrZipFile = async (formData: FormData) => {
       "Content-Type": "multipart/form-data", // Ensure the request is recognized as multipart
     },
   });
+  return response.data;
+};
+
+export const getAllUploadedFile = async () => {
+  const response = await axiosInstance.get(`${IVR_URL}/upload`);
   return response.data;
 };
 

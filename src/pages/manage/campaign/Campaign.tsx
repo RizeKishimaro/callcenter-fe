@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import { useToast } from "../../../components/ui/use-toast";
 import { PaginationState, SortingState } from "@tanstack/react-table";
 import { useQuery } from "@tanstack/react-query";
@@ -61,4 +61,4 @@ const Campaign = () => {
   )
 }
 
-export default Campaign
+export default memo(Campaign);

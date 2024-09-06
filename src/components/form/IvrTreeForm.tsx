@@ -12,12 +12,13 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { getAllCampaigns } from '../../service/sip/campaignService';
 import { AxiosError } from 'axios';
 import { BulkIvrType } from '../../providers/types/ivrType';
-import { bulkCreateIvr } from '../../service/ivr/ivrService';
+import { bulkCreateIvr, getAllUploadedFile } from '../../service/ivr/ivrService';
 
-const uploadedIvrList: string[] = ['greeting', 'intro', 'option', 'mm', 'eng', "mm_above3years", "mm_under3years", "mm_3AboveKeyMessage", "mm_3UnderKeyMessage", "mm_CallToAgent", "eng_above3years", "eng_under3years", "eng_3AboveKeyMessage", "eng_3UnderKeyMessage", "eng_CallToAgent"];
+// const uploadedIvrList: string[] = ['greeting', 'intro', 'option', 'mm', 'eng', "mm_above3years", "mm_under3years", "mm_3AboveKeyMessage", "mm_3UnderKeyMessage", "mm_CallToAgent", "eng_above3years", "eng_under3years", "eng_3AboveKeyMessage", "eng_3UnderKeyMessage", "eng_CallToAgent"];
 
 const IvrTreeForm = () => {
   const [tree, setTree] = useState<IvrTreeNodeType | null>(null);
+  const [uploadedIvrList, setUploadedIvrList] = useState<string[]>([]);
   const dispatch = useDispatch();
   const [parentId, setParentId] = useState<number>(1);
   const [label, setLabel] = useState<string>("");
@@ -27,10 +28,15 @@ const IvrTreeForm = () => {
   const [isLabelSelectDisabled, setIsLabelSelectDisabled] = useState<boolean>(true);
   const { toast } = useToast();
 
-  const { data, isError, isLoading, error } = useQuery({
+  const { data: CampaignData, isError: CampaignIsError, isLoading: CampaignIsLoading, error: CampaignError } = useQuery({
     queryKey: ['Campaigns'],
-    queryFn: getAllCampaigns,
+    queryFn: getAllCampaigns(0, 10, []),
   });
+
+  const { data: IVRData, isError: IVRIsError, isLoading: IVRIsLoading, error: IVRError, isSuccess: IVRIsSuccess } = useQuery({
+    queryKey: ['uploaded-ivrs'],
+    queryFn: getAllUploadedFile
+  })
 
   const handleErrorToast = useCallback((error: Error) => {
     const errorMessage = error.response?.data?.message || "Internal Server Error. Please tell your system administrator...";
@@ -54,13 +60,24 @@ const IvrTreeForm = () => {
     onError: handleErrorToast,
   });
 
-  const campaignLists = useMemo(() => data?.data || [], [data]);
+  const campaignLists = useMemo(() => CampaignData?.data || [], [CampaignData]);
 
   useEffect(() => {
-    if (isError && error instanceof AxiosError) {
-      handleErrorToast(error);
+    if (CampaignIsError && CampaignError instanceof AxiosError) {
+      handleErrorToast(CampaignError);
     }
-  }, [isLoading, isError, error, handleErrorToast]);
+  }, [CampaignIsLoading, CampaignIsError, CampaignError, handleErrorToast]);
+
+
+  useEffect(() => {
+    if (IVRIsError && IVRError instanceof AxiosError) {
+      handleErrorToast(IVRError);
+    }
+    if (IVRIsSuccess) {
+      console.log("IVR DATA: ", IVRData)
+      setUploadedIvrList(IVRData);
+    }
+  }, [IVRIsLoading, IVRIsError, IVRError, IVRIsSuccess, handleErrorToast]);
 
   const addNode = () => {
     if (!tree) {
@@ -128,25 +145,36 @@ const IvrTreeForm = () => {
     return nodes;
   };
 
+  const formatItem = (name: string) => {
+    // Extract filename from path
+    const filenameWithExtension = name?.split('/').pop() || '';
+
+    // Remove file extension
+    const filename = filenameWithExtension.replace(/\.[^/.]+$/, '');
+
+    // Replace underscores and hyphens with spaces
+    return filename.replace(/[_-]/g, ' ');
+  };
+
   const ivrTreeParentOptions = useMemo(() => {
     if (!tree) return [];
     return (
       getAllNodes(tree).map((node) => (
         <SelectItem key={node.id} value={node.id.toString()}>
-          {`${node.id}: ${node.label.replace(/[_-]/g, ' ')}`}
+          {`${node.id}: ${formatItem(node?.label)}`}
         </SelectItem>
       ))
     )
   }, [tree]);
 
   const ivrOptionLists = useMemo(() => uploadedIvrList.map((name, index) => {
-    const displayName = name.replace(/[_-]/g, ' ');
+    const displayName = formatItem(name || "");
     return (
       <SelectItem key={index} value={name}>
         {displayName}
       </SelectItem>
     );
-  }), []);
+  }), [uploadedIvrList]);
 
   const findNearestExtensionParent = (node: IvrTreeNodeType, tree: IvrTreeNodeType): IvrTreeNodeType | null => {
     const findParent = (currentNode: IvrTreeNodeType, parentId: number | null): IvrTreeNodeType | null => {

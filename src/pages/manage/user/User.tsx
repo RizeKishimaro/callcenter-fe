@@ -6,6 +6,8 @@ import { getAllUsers } from "../../../service/user/userService";
 import { AxiosError } from "axios";
 import { DataTable } from "../../../components/data-table";
 import { columns } from "./columns";
+import { Button } from "../../../components/ui/button";
+import { Link } from "react-router-dom";
 
 const User = () => {
   const { toast } = useToast();
@@ -38,7 +40,12 @@ const User = () => {
   return (
     <section className='py-10'>
       <div className='container'>
-        <h1 className='mb-6 text-3xl font-bold'>All Users</h1>
+      <div className="flex w-full justify-between">
+      <h1 className='mb-6 text-3xl font-bold'>All Users</h1>
+          <Button>
+            <Link to='/dashboard/manage/admin/create'>Create User</Link>
+          </Button>
+        </div>
         {!isLoading && !isError && isSuccess && (
           <DataTable
             columns={columns}

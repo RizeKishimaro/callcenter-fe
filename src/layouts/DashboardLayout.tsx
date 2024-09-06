@@ -1,6 +1,6 @@
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { TooltipProvider } from '../components/ui/tooltip';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '../components/ui/resizable';
 import { cn } from '../lib/utils';
@@ -9,6 +9,8 @@ import { useQuery } from '@tanstack/react-query';
 import { getProfile } from '../service/auth/authService';
 import { useToast } from '../components/ui/use-toast';
 import Loading from '../components/Loading';
+import { useEncrypt } from '../store/hooks/useEncrypt';
+import { useDecrypt } from '../store/hooks/useDecrypt';
 
 interface DashboardLayoutProps {
   userRole: string;
@@ -27,24 +29,18 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userRole }) => {
     setIsCollapsed(size <= navCollapsedSize);
   };
 
-  const { data, isLoading, isError, error } = useQuery({
+  const handleErrorToast = useCallback((error: Error) => {
+    const errorMessage = error.response?.data?.message || "Internal Server Error. Please tell your system administrator...";
+    toast({
+      variant: "destructive",
+      title: "Error!",
+      description: `Error: ${errorMessage}`,
+    });
+  }, [toast]);
+
+  const { data, isLoading, isError, error, isSuccess } = useQuery({
     queryKey: ['Profile'],
-    queryFn: () => getProfile(),
-    onSuccess: (data) => {
-      console.log(" The data from backend: ", data);
-    },
-    onError: (error) => {
-      console.log("ON ERROR : ", error);
-      if (error?.response?.data?.statusCode === 401) {
-        navigate('/sign-in');
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Error!",
-          description: `Error: ${error?.response?.data?.message}`,
-        });
-      }
-    },
+    queryFn: getProfile
   });
 
   useEffect(() => {
@@ -64,7 +60,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userRole }) => {
         });
       }
     }
-  }, [isLoading, isError, error, navigate, toast]);
+    if (!isLoading && isSuccess) {
+
+      const formatCampaign = useEncrypt(data?.Campaign?.name || "");
+      localStorage.setItem("campaign", formatCampaign)
+
+      // console.log(`unformated campaign: ${useDecrypt(localStorage.getItem('campaign'))}`)
+    }
+  }, [isLoading, isError, error, isSuccess, navigate, toast]);
 
   useEffect(() => {
     const handleWindowResize = () => {
@@ -102,7 +105,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userRole }) => {
     }
   }, [userRole, location.pathname, navigate]);
 
-  if (isLoading) return <Loading />;
+  if (isLoading) return (
+    <>
+      <div className="w-screen h-screen flex justify-center items-center">
+        <Loading />
+      </div>
+    </>
+  );
 
   return (
     <>

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getAllAgents } from "../../../service/agent/agentService";
-import { useCallback, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import { AxiosError } from "axios";
 import { useToast } from "../../../components/ui/use-toast";
 import { DataTable } from "../../../components/data-table";
@@ -62,4 +62,4 @@ const Agents = () => {
   );
 };
 
-export default Agents;
+export default memo(Agents);

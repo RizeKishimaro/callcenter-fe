@@ -1,15 +1,13 @@
-import React from 'react'
+import AgentCreateForm from '../../../components/form/AgentCreateForm'
 
-type Props = {}
-
-const CreateAgent = (props: Props) => {
+const CreateAgent = () => {
   return (
     <div className="flex flex-row w-[90%] mx-auto">
-    <div className="w-4/5 flex">
-        Agent Create Form
+      <div className="w-4/5 flex">
+        <AgentCreateForm />
+      </div>
+      <div className="w-1/5"></div>
     </div>
-    <div className="w-1/5"></div>
-</div>
   )
 }
 

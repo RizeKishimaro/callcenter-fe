@@ -31,7 +31,6 @@ const IvrAudioUploadForm = () => {
       return uploadIvrZipFile(formData); // Send FormData to the backend service
     },
     onSuccess: (data) => {
-      console.log(data);
       toast({
         description: "Successfully uploaded ivr file!",
       });

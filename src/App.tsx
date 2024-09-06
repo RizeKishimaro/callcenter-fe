@@ -20,17 +20,21 @@ import CreateCampaign from './pages/manage/campaign/CreateCampaign'
 import SipProvider from './pages/manage/sip-provider/SipProvider'
 import CreateSipProvider from './pages/manage/sip-provider/CreateSipProvider'
 import AudioStore from './pages/manage/audio-store/AudioStore'
+import Ivr from './pages/manage/ivr/Ivr'
+import CreateUser from './pages/manage/user/CreateUser'
+import CallHistory from './pages/manage/call-history/CallHistory'
 
 function App() {
-  const [userRole, setUserRole] = useState("admin");
+  const role = localStorage.getItem('role') || '';
+  const [userRole, setUserRole] = useState<string>(role);
   const navigate = useNavigate();
   useEffect(() => {
     const token = localStorage.getItem("access_token") || "";
     if (!token) {
-      navigate("/")
+      navigate("/sign-in")
     }
     // const payload: JWTTokenTypes = jwtDecode(token) || "";
-    setUserRole("admin")
+    // setUserRole("admin")
 
   }, [])
 
@@ -42,6 +46,7 @@ function App() {
         <Route path='/dashboard' element={<DashboardLayout userRole={userRole} />} >
           <Route path='manage' element={<ProtectedRoute role={userRole} allowedRoles={['admin', 'supervisor']} />} >
             <Route index element={<AdminHome />} />
+            <Route path='call-history' element={<CallHistory />} />
             <Route path='set-up' element={<SetUp />} />
             <Route path='audio-store' element={<AudioStore />} />
             {/* both supervisor and admin can access this route"agent" how can I do? */}
@@ -49,6 +54,8 @@ function App() {
             <Route path='agent/create' element={<CreateAgent />} />
             <Route path='admin' element={<ProtectedRoute role={userRole} allowedRoles={['admin', 'supervisor']} />}>
               <Route index element={<User />} />
+              <Route path='create' element={<CreateUser />} />
+              <Route path='ivr' element={<Ivr />} />
               <Route path='campaign' element={<Campaign />} />
               <Route path='campaign/create' element={<CreateCampaign />} />
               <Route path='sip-provider' element={<SipProvider />} />

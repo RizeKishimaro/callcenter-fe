@@ -35,7 +35,7 @@ axiosInstance.interceptors.response.use(
                 const refreshToken = localStorage.getItem("refresh_token");
                 if (refreshToken) {
                     // Call refresh token logic here
-                    const response = await axios.post(`${BACKEND_URL}/auth/refresh`, { token: refreshToken });
+                    const response = await axios.post(`${BACKEND_URL}/refresh-token`, { token: refreshToken });
                     const newTokens = response.data;
 
                     // Update Redux state with new tokens

@@ -24,7 +24,7 @@ const roleBasedAccess = {
     admin: [
         { title: 'Dashboard', label: '', icon: LayoutDashboard, variant: 'ghost', href: '/dashboard/manage' },
         { title: 'SetUp', label: '', icon: Building2, variant: 'ghost', href: '/dashboard/manage/set-up' },
-        { title: 'IVR', label: '', icon: AudioLines, variant: 'ghost', href: '/dashboard/manage/ivr' },
+        { title: 'IVR', label: '', icon: AudioLines, variant: 'ghost', href: '/dashboard/manage/admin/ivr' },
         { title: 'Agent', label: '', icon: Users2, variant: 'ghost', href: '/dashboard/manage/agent' },
         { title: 'Campaign', label: '', icon: ListEnd, variant: 'ghost', href: '/dashboard/manage/admin/campaign' },
         { title: 'CDR', label: '', icon: ScrollText, variant: 'ghost', href: '/dashboard/manage/cdr' },
