@@ -47,13 +47,13 @@ function App() {
           <Route path='manage' element={<ProtectedRoute role={userRole} allowedRoles={['admin', 'supervisor']} />} >
             <Route index element={<AdminHome />} />
             <Route path='call-history' element={<CallHistory />} />
-            <Route path='set-up' element={<SetUp />} />
             <Route path='audio-store' element={<AudioStore />} />
             {/* both supervisor and admin can access this route"agent" how can I do? */}
             <Route path='agent' element={<Agents />} />
             <Route path='agent/create' element={<CreateAgent />} />
             <Route path='admin' element={<ProtectedRoute role={userRole} allowedRoles={['admin', 'supervisor']} />}>
               <Route index element={<User />} />
+              <Route path='set-up' element={<SetUp />} />
               <Route path='create' element={<CreateUser />} />
               <Route path='ivr' element={<Ivr />} />
               <Route path='campaign' element={<Campaign />} />
