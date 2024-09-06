@@ -1,24 +1,25 @@
 import * as React from 'react';
 import {
-    AlertCircle,
-    AudioLines,
-    BetweenHorizonalEnd,
-    Building2,
-    CassetteTape,
-    FileClock,
-    FolderClock,
-    HeartHandshake,
-    History,
-    LayoutDashboard,
-    ListEnd,
-    PhoneCall,
-    ScrollText,
-    Settings,
-    UserCheck,
-    Users2,
+  AlertCircle,
+  AudioLines,
+  BetweenHorizonalEnd,
+  Building2,
+  CassetteTape,
+  FileClock,
+  FolderClock,
+  HeartHandshake,
+  History,
+  LayoutDashboard,
+  ListEnd,
+  PhoneCall,
+  ScrollText,
+  Settings,
+  UserCheck,
+  Users2,
 } from 'lucide-react';
 import { Separator } from './ui/separator';
 import { Nav } from './Nav';
+
 
 const roleBasedAccess = {
     admin: [
@@ -53,7 +54,7 @@ const roleBasedAccess = {
 };
 
 const Sidebar = ({ userRole, isCollapsed }: { userRole: string, isCollapsed: boolean, }) => {
-    const links = roleBasedAccess[userRole] || [];
+  const links = roleBasedAccess[userRole] || [];
 
     return (
         <div className='h-screen bg-dashboardPrimary text-white'>

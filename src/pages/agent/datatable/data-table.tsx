@@ -20,22 +20,29 @@ import {
   TableRow,
 } from "../../../components/ui/table"
 import { Button } from "../../../components/ui/button"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Input } from "../../../components/ui/input"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
+  filterColumn: string
+  onSelectedRowChange?: any
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  filterColumn,
+  onSelectedRowChange,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
     []
-  )
+  );
+  const [rowSelection, setRowSelection] = useState({})
+
+
   const table = useReactTable({
     data,
     columns,
@@ -45,20 +52,27 @@ export function DataTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    onRowSelectionChange: setRowSelection,
     state: {
       sorting,
-      columnFilters
+      columnFilters,
+      rowSelection,
     },
-  })
+  });
+  useEffect(() => {
+    const data = Object.values(table.getSelectedRowModel().rowsById).map(item => item.original);
+    onSelectedRowChange(data)
+  }, [rowSelection])
 
   return (
     <div>
       <div className="flex items-center py-4">
         <Input
           placeholder="Filter Agent Number"
-          value={(table.getColumn("agnumber")?.getFilterValue() as string) ?? ""}
-          onChange={(event: any) =>
-            table.getColumn("agnumber")?.setFilterValue(event.target.value)
+          value={(table.getColumn(filterColumn)?.getFilterValue() as string) ?? ""}
+          onChange={(event: any) => {
+            table.getColumn(filterColumn)?.setFilterValue(event.target.value)
+          }
           }
           className="max-w-sm"
         />

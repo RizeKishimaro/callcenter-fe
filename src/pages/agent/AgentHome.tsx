@@ -1,11 +1,11 @@
 import { useRef, useState, useEffect } from "react";
-import { SimpleUser, SimpleUserOptions } from "sip.js/lib/platform/web";
+import { SessionManager, SimpleUser, SimpleUserOptions } from "sip.js/lib/platform/web";
 import { UserAgent } from "sip.js";
 import { useNavigate } from "react-router-dom";
 import { PhoneCall, PhoneForwarded, PhoneOff } from "lucide-react";
 import { Input } from "../../components/ui/input";
-import { useSelector } from "react-redux";
 import { useDecrypt } from "../../store/hooks/useDecrypt";
+import axiosInstance from "../../providers/axiosClient";
 
 const AgentHome = () => {
 
@@ -17,6 +17,7 @@ const AgentHome = () => {
   const [isInvite, setIsInvite] = useState(false);
   const [dialpadNumber, setDialpadNumber] = useState(null);
   const [phoneNumber, setPhoneNumber] = useState('')
+  const [inviteNumber, setInviteNumber] = useState('')
   const [providerAddress, setProviderAddress] = useState("192.168.130.20")
   const navigate = useNavigate();
 
@@ -25,6 +26,8 @@ const AgentHome = () => {
     sipUsername: useDecrypt(localStorage.getItem("sipUsername") || ""),
     sipPassword: useDecrypt(localStorage.getItem("password") || "")
   }
+  const agentInfo = axiosInstance.get("")
+
   useEffect(() => {
     const server = `${import.meta.env.VITE_APP_WEBSOCKET_HOST}:${import.meta.env.VITE_APP_WEBSOCKET_PORT}/ws`;
     const aor = `sip:${agentAccount.sipUsername}@${import.meta.env.VITE_APP_SIP_HOST}`;
@@ -46,13 +49,16 @@ const AgentHome = () => {
     };
 
     const user = new SimpleUser(server, options);
+
     user.delegate = {
       onRegistered: async () => {
       },
       onCallReceived: async () => {
-        window.alert("First Invte");
-        console.log("coming")
         setIsRinging(true);
+      },
+      onUnregistered: () => {
+        simpleUser?.register()
+        window.alert("Your SIP account session has timed out please login again or refresh this page")
       },
       onCallHangup: () => {
         setIsInCall(false);
@@ -93,9 +99,17 @@ const AgentHome = () => {
       }
     };
   }, []);
+
+  useEffect(() => {
+    setIsRinging(false)
+    simpleUser?.answer()
+    setInviteNumber(simpleUser?.session?.incomingInviteRequest?.message?.from);
+    console.log(simpleUser?.session?.incomingInviteRequest?.message)
+  }, [simpleUser?.session, simpleUser?.incomingInviteRequest])
   // const emptyDialpad = () => {
   //   setDialpadNumber(undefined);
   // };
+
   useEffect(() => {
     const handleBeforeUnload = async (event: any) => {
       event.preventDefault();
@@ -107,16 +121,11 @@ const AgentHome = () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, []);
-  useEffect(() => {
-    console.log("wok")
-    //emptyDialpad();
-  }, [isCalling]);
 
   const handleCall = async () => {
     if (simpleUser && !isCalling && !isInCall) {
       setIsCalling(true);
       setPhoneNumber("")
-      console.log(phoneNumber);
       try {
         const destination = `sip:${phoneNumber}@${providerAddress}`;
         await simpleUser.call(destination, {
@@ -161,7 +170,6 @@ const AgentHome = () => {
     }
   };
   const transferCall = async () => {
-    console.log(simpleUser && simpleUser.session);
     if (simpleUser && simpleUser.session) {
       console.log(dialpadNumber)
       const uri = UserAgent.makeURI(`sip:${dialpadNumber}@${providerAddress}`);
@@ -176,12 +184,12 @@ const AgentHome = () => {
       console.error("No active session to transfer");
     }
   };
-  // const sendDTMF = (value: string) => {
-  //   if (simpleUser && isInCall) {
-  //     console.log(value)
-  //     //value && simpleUser.sendDTMF(value);
-  //   }
-  // };
+  const sendDTMF = (value: string) => {
+    if (simpleUser && isInCall) {
+      console.log(value)
+      value && simpleUser.sendDTMF(value);
+    }
+  };
   const handleTrunkLineChange = (e: any) => {
     if (e.value) {
       setProviderAddress("192.168.130.20")
@@ -221,18 +229,30 @@ const AgentHome = () => {
                         <img
                           alt="Profile"
                           src="https://demos.creative-tim.com/notus-js/assets/img/team-2-800x800.jpg"
-                          className="shadow-xl rounded-full h-auto border-none mr-4 max-w-[150px] absolute selection:transform top-[-70px] -translate-y-1/2"
+                          className="shadow-xl rounded-full h-auto border-none mr-4 max-w-[150px] absolute selection:transform top-[-100px] -translate-y-1/2"
                         />
-                        <div className="relative mt-[50px] flex justify-center gap-4">
-                          {!isInCall && !isCalling && !isRinging && (
-                            <div className="p-3 flex flex-col mt-5 gap-2">
-                              <Input placeholder="Enter Phone Number"
-                                className="input input-bordered input-primary w-full max-w-xs"
-                                value={phoneNumber || ""}
-                                onChange={(e) => {
-                                  setPhoneNumber(e.target.value)
-                                }}
-                              />
+                        <div className="mt-5">
+                          <div className="mb-3">
+                            <p>Invite From {inviteNumber && inviteNumber?._displayName}</p>
+                          </div>
+                          <div>
+                            <Input placeholder="Enter Phone Number"
+                              className="input input-bordered input-primary w-full max-w-xs"
+                              value={phoneNumber || ""}
+                              onChange={(e) => {
+                                sendDTMF(e.target.value?.at(-1))
+                                setPhoneNumber(e.target.value)
+                              }}
+                            />
+
+                          </div>
+
+                        </div>
+                        <div className="relative flex justify-center gap-4">
+                          <div className="p-3 flex flex-col mt-5 gap-2">
+
+                            {!isInCall && !isCalling && !isRinging && (
+
                               <div>
                                 <button
                                   onClick={handleCall}
@@ -242,9 +262,10 @@ const AgentHome = () => {
                                 </button>
 
                               </div>
-                            </div>
 
-                          )}
+                            )}
+                          </div>
+
                           {isInCall && (
                             <>
                               <button

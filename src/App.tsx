@@ -11,6 +11,7 @@ import SetUp from './pages/manage/SetUp'
 import { jwtDecode } from 'jwt-decode';
 import { useEffect, useState } from 'react'
 import { JWTTokenTypes } from './providers/types/jwttypes'
+<<<<<<< HEAD
 import { Toaster } from './components/ui/toaster'
 import Agents from './pages/manage/agent/Agents'
 import CreateAgent from './pages/manage/agent/CreateAgent'
@@ -23,6 +24,10 @@ import AudioStore from './pages/manage/audio-store/AudioStore'
 import Ivr from './pages/manage/ivr/Ivr'
 import CreateUser from './pages/manage/user/CreateUser'
 import CallHistory from './pages/manage/call-history/CallHistory'
+=======
+import Agents from './pages/admin/components/Agents'
+import SipProviderComponent from './pages/admin/components/SipProviderComponent'
+>>>>>>> 4ce3fd09e6babd6556afa04f31db04cb32418062
 
 function App() {
   const role = localStorage.getItem('role') || '';
