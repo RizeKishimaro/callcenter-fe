@@ -24,6 +24,11 @@ const ActiveQueue = () => {
   const onlineAgents = agents.filter(agent => agent.isActive).length;
   const idleAgents = totalAgents - onlineAgents;
 
+  const getFirstLetter = (name: string): string => {
+    const nameArray = name.split('');
+    return nameArray[0].toLocaleUpperCase();
+  }
+
   const allAgents: activeAgentProps[] = agents;
   return (
     <div className='bg-dashboardSecondary dark:bg-dashboardSecondary-foreground rounded-md h-full px-10 py-5'>
@@ -69,7 +74,7 @@ const ActiveQueue = () => {
                 <DrawerTrigger>
                   <Avatar className={`rounded-full h-16 w-16 cursor-pointer hover:scale-110 transition-all ease-in-out duration-200 bg-black ${agent.isActive ? 'opacity-100' : 'opacity-40'}`}>
                     <AvatarImage src="" />
-                    <AvatarFallback>{agent.name}</AvatarFallback>
+                    <AvatarFallback>{getFirstLetter(agent.name)}</AvatarFallback>
                   </Avatar>
                 </DrawerTrigger>
                 <DrawerContent>
