@@ -34,6 +34,7 @@ const SignInForm = () => {
       toast({
         description: "Successfully login!"
       })
+      console.log(data)
 
       const encryptedPassword = useEncrypt(form.getValues("password"));
       const encryptedSipUsername = useEncrypt(form.getValues('sipUsername'))

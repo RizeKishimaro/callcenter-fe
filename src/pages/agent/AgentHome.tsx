@@ -1,5 +1,5 @@
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useMemo } from "react";
 import JsSIP, { UA } from "jssip";
 import { RTCSession } from "jssip/lib/RTCSession";
 import { Clock, MicOff, PhoneCall, PhoneForwarded, PhoneIcon, PhoneIncoming, PhoneOff, PhoneOffIcon } from "lucide-react";
@@ -15,15 +15,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { socket } from "../../providers/socket/socket";
 import { useDecrypt } from "../../store/hooks/useDecrypt";
 import axiosInstance from "../../providers/axiosClient";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { Button } from "../../components/ui/button";
 import SecondCounter from "./SecondCounter";
-import { Session } from "sip.js";
+import { UAConfiguration } from "jssip/lib/UA";
 
 const AgentHome = () => {
   const remoteAudioRef = useRef(null);
+  const [isConnected, setIsConnected] = useState(socket.connected)
   const [webphoneStatus, setWebphoneStatus] = useState(false);
   const [accountStatus, setAccountStatus] = useState(false);
   const [ua, setUa] = useState<UA | null>(null);
@@ -33,9 +35,12 @@ const AgentHome = () => {
   const [isRinging, setIsRinging] = useState(false);
   const [dialpadNumber, setDialpadNumber] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [inviteNumber, setInviteNumber] = useState(null);
-  const [providerAddress, setProviderAddress] = useState("192.168.130.20");
+  const [inviteNumber, setInviteNumber] = useState("");
+  const [clientCount, setClientCount] = useState(0)
+  const [providerAddress, setProviderAddress] = useState(null);
   const audioElement = useRef<HTMLAudioElement | null>(null)
+  const [pauseReason, setPauseReason] = useState('')
+  const [isPaused, setIsPaused] = useState(false)
   const [agentData, setAgentData] = useState<any>(null);
 
   const agentAccount = {
@@ -43,39 +48,65 @@ const AgentHome = () => {
     sipPassword: useDecrypt(localStorage.getItem("password") || ""),
     agentId: localStorage.getItem("id") || ""
   };
-
   const getAgentInfo = async () => {
-    return await axiosInstance.get(`/agent/${agentAccount.agentId}`);
+    const data = await axiosInstance.get(`/agent/${agentAccount.agentId}`);
+    setAgentData(data.data);
+    setProviderAddress(data.data.SipProvider.host)
+
+    return data
   };
+  const sendInactiveAgent = () => {
+    setIsConnected(false);
+    socket.emit("incall", {
+      isActive: isInCall
+    });
+
+  }
+  const sendActiveAgent = () => {
+    setIsConnected(true);
+    socket.emit("idle", {
+      isActive: isInCall
+    });
+
+  }
+
 
   useEffect(() => {
-    const socket = new JsSIP.WebSocketInterface(`${import.meta.env.VITE_APP_WEBSOCKET_HOST}:${import.meta.env.VITE_APP_WEBSOCKET_PORT}/ws`)
-    const configuration = {
+    const wsSocket = new JsSIP.WebSocketInterface(`${import.meta.env.VITE_APP_WEBSOCKET_HOST}:${import.meta.env.VITE_APP_WEBSOCKET_PORT}/ws`)
+    const configuration: UAConfiguration = {
       uri: `sip:${agentAccount.sipUsername}@${import.meta.env.VITE_APP_SIP_HOST}`,
-      sockets: [socket],
-      authorizationUser: agentAccount.sipUsername,
+      sockets: [wsSocket],
+      authorization_user: agentAccount.sipUsername,
       password: agentAccount.sipPassword,
     };
 
     const userAgent = new JsSIP.UA(configuration);
-    setUa(userAgent);
 
+
+    setUa(userAgent)
 
 
     userAgent.on("disconnected", () => {
-      userAgent.register();
       console.log(userAgent.status)
     })
+    userAgent.start();
+    getAgentInfo()
 
+    return () => {
+      // userAgent.stop()
+    };
+  }, []);
+
+  useEffect(() => {
     const applySetInvite = (number) => {
       setInviteNumber(number);
     }
-    userAgent.on("newRTCSession", (e) => {
+    ua?.on("newRTCSession", (e) => {
       const session: RTCSession = e?.session;
       setIsRinging(true);
-      console.log(session?.remote_identity?.display_name?.toString());
-      applySetInvite(session?.remote_identity?.display_name?.toString())
-
+      const number = session?.remote_identity?.display_name?.toString()
+      setSession(session)
+      applySetInvite(number)
       session.on('confirmed', () => {
         console.log("incall ")
         setIsInCall(true);
@@ -95,16 +126,35 @@ const AgentHome = () => {
 
       });
 
-      session.on('ended', () => {
-        console.log(session.remote_identity, session.local_identity)
+      session.on('ended', (data) => {
+        if (agentData) {
+          const total_second = (new Date(session?.end_time).getTime() - new Date(session?.start_time).getTime()) / 1000
+          const hangUpfrom = !data?.message?.from ? agentAccount.agentId : null
+          console.log(agentData)
+          sendCallHistory(session?.remote_identity.uri.user,
+            session.local_identity.uri.user, hangUpfrom, null, session.start_time, session?.end_time,
+            total_second, data.cause, agentData?.Campaign?.name, session?.direction)
+          handlePause(agentAccount.sipUsername, agentData?.Campaign?.name)
+        } else {
+          console.log("No Data FOund")
+        }
         setIsInCall(false);
         setIsRinging(false);
         setIsCalling(false);
-
+        setIsPaused(true)
+        sendActiveAgent()
+        console.log("ended")
       });
 
-      session.on('failed', () => {
-        console.log(session.remote_identity, session.local_identity)
+      session.on('failed', (data) => {
+        if (agentData) {
+          const total_second = isNaN((new Date(session?.end_time).getTime() - new Date(session?.start_time).getTime()) / 1000) && null
+          const hangUpfrom = !data?.message?.from ? agentAccount.agentId : null
+          sendCallHistory(session?.remote_identity.uri.user,
+            session.local_identity.uri.user, hangUpfrom, null, session.start_time, session?.end_time,
+            total_second, data.cause, agentData?.Campaign?.name, session?.direction)
+        }
+        sendActiveAgent()
 
         setIsCalling(false);
         setIsInCall(false)
@@ -113,17 +163,7 @@ const AgentHome = () => {
 
 
     });
-
-    userAgent.start();
-
-    return () => {
-    };
-  }, []);
-
-  useEffect(() => {
     ua?.on("connected", () => {
-      console.log("connected")
-      setWebphoneStatus(true)
     });
     ua?.on("disconnected", () => {
       console.log("disconnected")
@@ -133,23 +173,57 @@ const AgentHome = () => {
       setAccountStatus(true);
     })
     ua?.on("unregistered", () => {
+      // ua?.register();
       console.log("unregistered")
       setAccountStatus(false)
     })
-    getAgentInfo().then((data) => {
-      setAgentData(data.data);
-      console.log(data)
 
-      setProviderAddress(data.data.SipProvider.host)
-    });
 
 
     return () => {
     };
   }, [ua]);
+  useEffect(() => {
+    if (isInCall) {
+      sendInactiveAgent()
+    }
+  }, [isInCall])
+  useEffect(() => {
+    socket.on('connect', () => {
+      setIsConnected(true)
+      setWebphoneStatus(true)
+    });
+
+    socket.emit('exchangeData', {
+      userId: agentData?.id,
+      displayName: agentData?.name,
+      profile: agentData?.profile ? `${import.meta.env.VITE_APP_BACKEND_URL}/${agentData?.profile}` : "",
+      sipName: agentData?.sipName,
+      isActive: isInCall
+    });
+
+    socket.emit('joinRoom', { room: agentData?.Campaign?.name });
+
+    socket.on('exchangeComplete', (s) => {
+      console.log('exchange complete', s);
+    });
+    socket.on("agentData", (data) => {
+      console.log(data)
+    })
+    socket.on('clientCount', (roomCounts) => {
+      setClientCount(roomCounts)
+    });
+    socket.emit('getAgentData', (response) => {
+      console.log('Agent data:', response);
+    });
+    if (isInCall) {
+      sendInactiveAgent()
+    }
+
+  }, [agentData?.id]);
 
   const sendCallHistory = (remote_num, local_num, hangUpfrom?: any, transferFrom?: any,
-    start_time, end_time, total_second: number, call_status, campaign_name) => {
+    start_time, end_time, total_second, call_status, campaign_name, direction) => {
     const startdate = new Date(start_time).toISOString()
     const enddate = new Date(end_time).toISOString()
     axiosInstance.post(`/call-history`, {
@@ -160,6 +234,8 @@ const AgentHome = () => {
       call_start_time: startdate,
       call_end_time: enddate,
       total_seconds: Math.floor(total_second),
+      direction: direction,
+      agent_number_id: agentData?.id,
       call_status,
       campaign_name,
     })
@@ -169,7 +245,6 @@ const AgentHome = () => {
     if (ua && !isCalling || !isInCall) {
       setIsCalling(true);
       setInviteNumber(phoneNumber)
-
       const options = {
         mediaConstraints: { audio: true, video: false },
         sessionDescriptionHandlerOptions: {
@@ -179,6 +254,20 @@ const AgentHome = () => {
 
       const destination = `sip:${phoneNumber}@${providerAddress}`;
       const callSession = ua?.call(destination, options);
+      const peerConnection = callSession?.connection;
+
+      callSession?.on("progress", () => {
+        peerConnection?.getReceivers().forEach((receiver) => {
+          if (receiver.track.kind === 'audio') {
+            if (audioElement.current) {
+              const remoteStream = new MediaStream();
+              remoteStream.addTrack(receiver.track);
+              audioElement.current.srcObject = remoteStream;
+              audioElement.current.play();
+            }
+          }
+        });
+      });
       callSession?.on("accepted", () => {
         setIsInCall(true)
         const peerConnection = callSession?.connection;
@@ -199,18 +288,27 @@ const AgentHome = () => {
       callSession?.on('ended', (data) => {
         const total_second = (new Date(callSession?.end_time).getTime() - new Date(callSession?.start_time).getTime()) / 1000
         const hangUpfrom = !data?.message?.from ? agentAccount.agentId : null
-        console.log(hangUpfrom)
+        console.log(hangUpfrom);
+        sendActiveAgent()
         sendCallHistory(callSession?.remote_identity.uri.user,
-          callSession.local_identity.uri.user, hangUpfrom, null, callSession.start_time, callSession?.end_time, total_second, data.cause, agentData.Campaign.name)
+          callSession.local_identity.uri.user, hangUpfrom, null, callSession.start_time, callSession?.end_time,
+          total_second, data.cause, agentData.Campaign.name, callSession?.direction)
         setIsInCall(false);
         setIsCalling(false);
         setInviteNumber("");
+        setIsPaused(true)
+        handlePause(agentAccount?.sipUsername, agentData?.Campaign.name);
       });
 
-      callSession?.on('failed', (reasaon) => {
-        console.log(reasaon.cause)
-        console.log(callSession?.remote_identity, callSession?.local_identity)
+      callSession?.on('failed', (data) => {
+        const total_second = (new Date(callSession?.end_time).getTime() - new Date(callSession?.start_time).getTime()) / 1000
+        const hangUpfrom = !data?.message?.from ? agentAccount.agentId : null
+        sendCallHistory(callSession?.remote_identity.uri.user,
+          callSession.local_identity.uri.user, hangUpfrom, null, callSession.start_time, callSession?.end_time,
+          total_second, data.cause, agentData.Campaign.name, callSession?.direction)
         setIsCalling(false);
+        sendActiveAgent()
+
         setInviteNumber("");
       });
     }
@@ -223,6 +321,23 @@ const AgentHome = () => {
       setIsRinging(false);
     }
   };
+  const handlePause = async (agt_number, campaign_name) => {
+    console.log(agt_number, campaign_name)
+    const { status } = await axiosInstance.post(`/agent/pause`, {
+      username: agt_number,
+      campaign: campaign_name,
+      reason: pauseReason
+    });
+    console.log(status)
+    if (!status.toString().startsWith("2")) {
+      setIsPaused(false)
+      return 0;
+    }
+    setIsPaused(true)
+    localStorage.setItem("paused", "true");
+    console.log("paused")
+    return 1;
+  }
   const muteCall = () => {
     if (session) {
       session.mute();
@@ -250,6 +365,16 @@ const AgentHome = () => {
     }
   };
 
+  const handleResume = async () => {
+    const { status } = await axiosInstance.post(`/agent/resume`, {
+      username: agentData?.sipName,
+      campaign: agentData?.Campaign?.name,
+    })
+    setPauseReason("")
+    setIsPaused(false)
+    localStorage.setItem("paused", "false");
+    return 1;
+  }
   const sendDTMF = (value: string) => {
     if (session && isInCall) {
       session.sendDTMF(value);
@@ -302,7 +427,7 @@ const AgentHome = () => {
                                 className="inline-block whitespace-nowrap rounded-full bg-danger-100 px-[0.65em] pb-[0.25em] pt-[0.35em] text-center align-baseline text-[0.75em] font-bold leading-none text-danger-700 dark:bg-[#2c0f14] dark:text-danger-500 ">
                                 offline
                               </span>}
-                              <p className="text-sm mt-2">Online Agents: {49}</p>
+                              <p className="text-sm mt-2">Online Agents: {clientCount}</p>
                             </div>
                           </div>
                         </div>
@@ -352,112 +477,157 @@ const AgentHome = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="md:w-2/4 w-full">
-                    <div className=" flex text-center items-center justify-center">
-                      <p className="text-xl font-medium">WebPhone</p>
-                      <span className="relative flex h-3 w-3 ml-3">
-                        <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${webphoneStatus ? "bg-green-400" : "bg-red-400"} opacity-75`}></span>
-                        <span className={`relative inline-flex rounded-full h-3 w-3 ${webphoneStatus ? "bg-green-600" : "bg-red-600"} `}></span>
-                      </span>
-                    </div>
-                    <div className="ml-3 my-3">
-
-                      <div className="flex flex-col">
-                        {isRinging || isInCall && (
-                          <p className="flex mb-3">
-                            <PhoneIcon className="mr-2" />
-                            <span>{inviteNumber ? inviteNumber : "unknown"}</span>
-                          </p>
-                        )}
-                        {!isRinging && isInCall && (
-                          <>
-
-
-                            <div className="flex mb-3">
-                              <Clock className="mr-2" />
-                              <SecondCounter />
-                            </div>
-
-                          </>
-                        )
-                        }
+                  <div className="md:w-2/4 w-full h-full my-auto p-4 flex flex-col">
+                    <div className="border-2 rounded-lg p-3 mb-3">
+                      <div className=" text-center flex items-center justify-center">
+                        <p className="text-xl font-medium">WebPhone</p>
+                        <span className="relative flex h-3 w-3 ml-3">
+                          <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${webphoneStatus ? "bg-green-400" : "bg-red-400"} opacity-75`}></span>
+                          <span className={`relative inline-flex rounded-full h-3 w-3 ${webphoneStatus ? "bg-green-600" : "bg-red-600"} `}></span>
+                        </span>
                       </div>
+                      <div className="text-center">
+                        <span className="opacity-75 ml-3 text-center text-sm">(if this is red it's lying)</span>
 
-                      <div className="my-5">
-                        {!isCalling && !isRinging && (
-                          <Input
-                            placeholder="Enter Phone Number"
-                            onChange={(e) => setPhoneNumber(e.target.value)}
-                            className="w-2/4 mx-auto mb-3"
-                          />
-                        )}
-                        {isInCall && (
-                          <>
+                      </div>
+                      <div className="ml-3 my-3">
+
+                        <div className="flex flex-col">
+                          {isRinging && (
+                            <p className="flex mb-3">
+                              <PhoneIcon className="mr-2" />
+                              <span>{inviteNumber ? inviteNumber : "unknown"}</span>
+                            </p>
+                          )}
+                          {isInCall && (
+                            <p className="flex mb-3">
+                              <PhoneIcon className="mr-2" />
+                              <span>{inviteNumber ? inviteNumber : "unknown"}</span>
+                            </p>
+                          )}
+
+                          {!isRinging && isInCall && (
+                            <>
+
+
+                              <div className="flex mb-3">
+                                <Clock className="mr-2" />
+                                <SecondCounter />
+                              </div>
+
+                            </>
+                          )
+                          }
+                        </div>
+
+                        <div className="my-5">
+                          {!isCalling && !isRinging && !isInCall && (
                             <Input
-                              placeholder="Enter DTMF To Send"
-                              onChange={(e) => {
-                                const number = e.target.value.at(-1);
-                                sendDTMF(number);
-                              }}
+                              placeholder="Enter Phone Number"
+                              onChange={(e) => setPhoneNumber(e.target.value)}
                               className="w-2/4 mx-auto mb-3"
                             />
-                            <Input
-                              placeholder="Enter Number To Transfer"
-                              onChange={(e) => setDialpadNumber(e.target.value)}
-                              className="w-2/4 mx-auto mb-3"
-                            />
-                          </>
-                        )}
+                          )}
+                          {isInCall && (
+                            <>
+                              <Input
+                                placeholder="Enter DTMF To Send"
+                                onChange={(e) => {
+                                  const number = e.target.value.at(-1);
+                                  sendDTMF(number);
+                                }}
+                                className="w-2/4 mx-auto mb-3"
+                              />
+                              <Input
+                                placeholder="Enter Number To Transfer"
+                                onChange={(e) => setDialpadNumber(e.target.value)}
+                                className="w-2/4 mx-auto mb-3"
+                              />
+                            </>
+                          )}
+                        </div>
+
+                        <audio ref={audioElement} autoPlay className="hidden" />
+
+                        {isCalling && <p>Calling...</p>}
+
+                        <div className="flex justify-center items-center">
+                          {!isCalling && !isRinging && !isInCall && (
+                            <button
+                              className={`${!phoneNumber ? "opacity-50" : ""} p-5 bg-green-400 rounded-full mr-3`}
+                              disabled={!phoneNumber}
+                              onClick={handleCall}
+                            >
+                              <PhoneCall />
+                            </button>
+                          )}
+                          {isRinging && !isInCall && (
+                            <>
+                              <button onClick={handleAnswer} className="p-5 bg-green-400 rounded-full mr-3">
+                                <PhoneIncoming />
+                              </button>
+                              <button className="p-5 bg-red-400 rounded-full mr-3" onClick={handleHangup}>
+                                <PhoneOff />
+                              </button>
+                            </>
+                          )}
+
+                          {isInCall && (
+                            <>
+                              <button className="p-5 bg-red-400 rounded-full mr-3" onClick={handleHangup}>
+                                <PhoneOff />
+                              </button>
+                              <button className="p-5 bg-red-400 rounded-full mr-3" onClick={handleHangup}>
+                                <PhoneOff />
+                              </button>
+                              <button className="p-5 bg-red-400 rounded-full mr-3" onClick={transferCall}>
+                                <PhoneForwarded />
+                              </button>
+                              <button className="p-5 bg-red-400 rounded-full mr-3" onClick={muteCall}>
+                                <MicOff />
+                              </button>
+                              <button className="p-5 bg-green-400 rounded-full mr-3" onClick={unmuteCall}>
+                                <MicOff />
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </div>
 
-                      <audio ref={audioElement} autoPlay className="hidden" />
-
-                      {isCalling && <p>Calling...</p>}
-
-                      <div className="flex justify-center items-center">
-                        {!isCalling && !isRinging && !isInCall && (
-                          <button
-                            className={`${!phoneNumber ? "opacity-50" : ""} p-5 bg-green-400 rounded-full mr-3`}
-                            disabled={!phoneNumber}
-                            onClick={handleCall}
-                          >
-                            <PhoneCall />
-                          </button>
-                        )}
-                        {isRinging && (
-                          <>
-                            <button onClick={handleAnswer} className="p-5 bg-green-400 rounded-full mr-3">
-                              <PhoneIncoming />
-                            </button>
-                            <button className="p-5 bg-red-400 rounded-full mr-3" onClick={handleHangup}>
-                              <PhoneOff />
-                            </button>
-                          </>
-                        )}
-
-                        {isInCall && (
-                          <>
-                            <button className="p-5 bg-red-400 rounded-full mr-3" onClick={handleHangup}>
-                              <PhoneOff />
-                            </button>
-                            <button className="p-5 bg-red-400 rounded-full mr-3" onClick={handleHangup}>
-                              <PhoneOff />
-                            </button>
-                            <button className="p-5 bg-red-400 rounded-full mr-3" onClick={transferCall}>
-                              <PhoneForwarded />
-                            </button>
-                            <button className="p-5 bg-red-400 rounded-full mr-3" onClick={muteCall}>
-                              <MicOff />
-                            </button>
-                            <button className="p-5 bg-green-400 rounded-full mr-3" onClick={unmuteCall}>
-                              <MicOff />
-                            </button>
-                          </>
-                        )}
-                      </div>
                     </div>
+                    <div className="mt-4 p-4 border-2 rounded-lg">
+                      <h3 className="text-center font-medium text-xl mb-3">Pause Me</h3>
+                      {
+                        !isPaused && localStorage.getItem("paused") != "true" ? (<>
+                          <div className="mb-3 w-2/4 mx-auto">
+                            <Input placeholder="Reason" onChange={
+                              (e) => {
+                                setPauseReason(e.target.value)
+                              }} />
+                          </div>
+                          <div className="text-center" >
+                            <Button onClick={() => {
+                              handlePause(agentAccount?.sipUsername, agentData?.Campaign.name)
+                            }} variant={"secondary"}>Pause</Button>
+                          </div>
+
+                        </>) : (<>
+                          <p className="text-center mb-3">You are paused</p>
+                          <div className="text-center" >
+                            <Button onClick={() => {
+                              handleResume()
+                              setIsPaused(false)
+                            }} variant={"secondary"}>Resume</Button>
+                          </div>
+
+                        </>)
+                      }
+                    </div>
+
                   </div>
+
                 </div>
+
               </div>
             </div>
           </section>

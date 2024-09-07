@@ -81,7 +81,7 @@ const SipInfo = (props: Props) => {
             {
               message && message.cpu.individual.map((el, index) => {
                 return (
-                  <div>
+                  <div key={index}>
                     <p key={index}>Core {index}: {Math.floor(el.usage)}%</p>
                   </div>
 

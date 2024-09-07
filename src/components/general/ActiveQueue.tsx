@@ -6,7 +6,7 @@ import { activeAgentProps } from '../../providers/types/agent';
 import { agents } from '../../constant/agent';
 import { Badge } from '../ui/badge';
 
-const ActiveQueue = () => {
+const ActiveQueue = ({ sockets, spyAgent, stopSpy }) => {
   const containerWidth = 400; // Define the width of the container
   const containerHeight = 400; // Define the height of the container
   const iconSize = 64; // Size of the icons (h-16 w-16 in Tailwind CSS is 64px)
@@ -20,8 +20,8 @@ const ActiveQueue = () => {
   };
 
   // Calculate agent statistics
-  const totalAgents = agents.length;
-  const onlineAgents = agents.filter(agent => agent.isActive).length;
+  const totalAgents = sockets.data.length;
+  const onlineAgents = sockets?.data?.filter(agent => agent.isActive).length;
   const idleAgents = totalAgents - onlineAgents;
 
   const allAgents: activeAgentProps[] = agents;
@@ -30,7 +30,7 @@ const ActiveQueue = () => {
       <div className="flex flex-col md:flex-row justify-between">
         <div className="flex-1 flex justify-center items-center h-20">
           <h3 className='text-5xl'>
-            {totalAgents}
+            {sockets?.totalAgents || 0}
           </h3>
           <p className='text-sm uppercase'>
             Total <br></br>
@@ -39,7 +39,7 @@ const ActiveQueue = () => {
         </div>
         <div className="flex-1 flex justify-center items-center h-20">
           <h3 className='text-5xl'>
-            {onlineAgents}
+            {sockets.onlineAgentLen || 0}
           </h3>
           <p className='text-sm uppercase'>
             Online <br></br>
@@ -59,17 +59,23 @@ const ActiveQueue = () => {
       <div
         className="overflow-hidden relative w-full h-[80%]"
       >
-        {allAgents.map((agent) => (
-          <Draggable key={agent.id} bounds="parent">
+        {sockets?.data && sockets?.data?.map((agent) => (
+          <Draggable key={agent.userid} bounds="parent">
             <div
               className={`absolute ${agent.isActive ? 'opacity-100' : 'opacity-40'}`}
               style={randomPosition()}
             >
               <Drawer>
                 <DrawerTrigger>
-                  <Avatar className={`rounded-full h-16 w-16 cursor-pointer hover:scale-110 transition-all ease-in-out duration-200 bg-black ${agent.isActive ? 'opacity-100' : 'opacity-40'}`}>
-                    <AvatarImage src="" />
-                    <AvatarFallback>{agent.name}</AvatarFallback>
+                  <Avatar onClick={() => {
+                    console.log()
+                    if (!agent.isActive) return -1;
+                    spyAgent(agent.sipName)
+                    return;
+                  }}
+                    className={`rounded-full h-16 w-16 cursor-pointer hover:scale-110 transition-all ease-in-out duration-200 bg-black ${agent.isActive ? 'opacity-100' : 'opacity-40'}`}>
+                    <AvatarImage src={agent.profile} />
+                    <AvatarFallback>{agent.displayName}</AvatarFallback>
                   </Avatar>
                 </DrawerTrigger>
                 <DrawerContent>
@@ -78,35 +84,31 @@ const ActiveQueue = () => {
                       {/* User Image on the left */}
                       <div className="flex-shrink-0 flex-1">
                         <Avatar className="rounded-full h-44 w-44">
-                          <AvatarImage src={agent.img} />
-                          <AvatarFallback>{agent.name}</AvatarFallback>
+                          <AvatarImage src={agent.profile} />
+                          <AvatarFallback>{agent.displayName}</AvatarFallback>
                         </Avatar>
                       </div>
 
                       <div className="flex flex-col justify-center flex-1 h-full gap-y-2">
                         <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
                           <div>Name:</div>
-                          <div className="font-semibold">{agent.name}</div>
+                          <div className="font-semibold">{agent.displayName}</div>
                           <div>Email:</div>
-                          <div className="font-semibold">{agent.email}</div>
+                          <div className="font-semibold">{agent.email || "-"}</div>
                           <div>Status:</div>
                           <div className="font-semibold">{agent.isActive ? (
                             <Badge className='bg-success text-white'>Active</Badge>
                           ) : (
                             <Badge className='bg-red-400 text-white'>InActive</Badge>
-                          )}</div>
-                          <div>Gender:</div>
-                          <div className="font-semibold">{agent.gender}</div>
-                          <div>Address:</div>
-                          <div className="font-semibold">{agent.address}</div>
-                          <div>Call Time:</div>
-                          <div className="font-semibold">{agent.callTime} - minutes</div>
+                          )}
+                          </div>
                         </div>
                       </div>
                     </div>
                     <DrawerFooter>
-                      <DrawerClose>
-                        <Button className='w-full'>Close</Button>
+                      <DrawerClose onClick={stopSpy} className='w-full bg-white text-black py-2 px-2 rounded-lg'>
+                        Close
+                        {/* <Button className='w-full'>Close</Button> */}
                       </DrawerClose>
                     </DrawerFooter>
                   </div>
