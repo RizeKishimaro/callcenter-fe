@@ -8,7 +8,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ role, allowedRoles }) => {
-  console.log(role, allowedRoles.includes(role))
+  console.log(role, allowedRoles)
   return allowedRoles.includes(role) ? <Outlet /> : <>You Are Not Authorized To Perform this action</>;
 };
 

@@ -166,6 +166,7 @@ const AgentHome = () => {
     ua?.on("connected", () => {
     });
     ua?.on("disconnected", () => {
+      ua?.start()
       console.log("disconnected")
       setWebphoneStatus(false)
     })

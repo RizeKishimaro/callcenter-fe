@@ -75,7 +75,7 @@ const ActiveQueue = ({ sockets, spyAgent, stopSpy }: { sockets: any, spyAgent: a
                   <Avatar onClick={() => {
                     console.log()
                     if (!agent.isActive) return -1;
-                    spyAgent(agent.sipName)
+                    spyAgent(agent?.sipName)
                     return;
                   }}
                     className={`rounded-full h-16 w-16 cursor-pointer hover:scale-110 transition-all ease-in-out duration-200 bg-black ${agent.isActive ? 'opacity-100' : 'opacity-40'}`}>

@@ -49,7 +49,7 @@ const roleBasedAccess = {
     { title: 'User', label: '', icon: UserCheck, variant: 'ghost', href: '/dashboard/manage/user' },
   ],
   agent: [
-    { title: 'Call History', label: '', icon: History, variant: 'ghost', href: '/dashboard/manage/call-history' },
+    { title: 'Call History', label: '', icon: History, variant: 'ghost', href: '/dashboard/agent/recentscalls' },
     { title: 'Agent', label: '', icon: Users2, variant: 'ghost', href: '/dashboard/agent/agent' },
   ],
 };
