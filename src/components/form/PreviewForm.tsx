@@ -9,7 +9,7 @@ const PreviewForm = () => {
         <Card className="w-[80%]">
             <CardHeader className="text-center space-y-5">
                 <CardTitle>Setup Preview Form</CardTitle>
-                <CardDescription>Step 4: THe following are your's config about your call center!</CardDescription>
+                <CardDescription>Step 5: THe following are your's config about your call center!</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="w-[80%] mx-auto flex flex-col justify-center h-full gap-y-5">

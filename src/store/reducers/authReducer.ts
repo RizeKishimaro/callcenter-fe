@@ -61,6 +61,15 @@ const authSlice = createSlice({
       localStorage.setItem("sipUsername", state.sipUsername);
       localStorage.setItem("password", state.password);
     },
+    setSipUsername: (state,
+      action: PayloadAction<{
+        sipUsername: string;
+      }>) => {
+      state.sipUsername = action.payload.sipUsername;
+
+      localStorage.setItem("sipUsername", state.sipUsername);
+
+    },
     logout: (state) => {
       state.sipUsername = "";
       state.password = "";
@@ -71,11 +80,12 @@ const authSlice = createSlice({
       localStorage.removeItem("refresh_token");
       localStorage.removeItem("sipUsername");
       localStorage.removeItem("password");
+      localStorage.removeItem("campaign");
       localStorage.removeItem("role");
     },
   },
 });
 
 
-export const { setToken, setUserInfo, logout } = authSlice.actions;
+export const { setToken, setUserInfo, logout , setSipUsername} = authSlice.actions;
 export default authSlice.reducer;

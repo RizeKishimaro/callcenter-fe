@@ -1,4 +1,3 @@
-import { Search } from './form/Search'
 import { ModeToggle } from './mode-toggle'
 import { UserNav } from './UserNav'
 
@@ -13,7 +12,6 @@ const Navbar = (props: Props) => {
                         {/* <TeamSwitcher />
                         <MainNav className="mx-6" /> */}
                         <div className="ml-auto flex items-center space-x-4">
-                            <Search />
                             <ModeToggle />
                             <UserNav />
                         </div>

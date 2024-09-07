@@ -6,7 +6,7 @@ import { activeAgentProps } from '../../providers/types/agent';
 import { agents } from '../../constant/agent';
 import { Badge } from '../ui/badge';
 
-const ActiveQueue = ({ sockets, spyAgent, stopSpy }) => {
+const ActiveQueue = ({ sockets, spyAgent, stopSpy }: { sockets: any, spyAgent: any, stopSpy: any }) => {
   const containerWidth = 400; // Define the width of the container
   const containerHeight = 400; // Define the height of the container
   const iconSize = 64; // Size of the icons (h-16 w-16 in Tailwind CSS is 64px)
@@ -20,9 +20,14 @@ const ActiveQueue = ({ sockets, spyAgent, stopSpy }) => {
   };
 
   // Calculate agent statistics
-  const totalAgents = sockets.data.length;
-  const onlineAgents = sockets?.data?.filter(agent => agent.isActive).length;
+  const totalAgents = sockets?.data?.length || 0;
+  const onlineAgents = sockets?.data?.filter(agent => agent.isActive).length || 0;
   const idleAgents = totalAgents - onlineAgents;
+
+  const getFirstLetter = (name: string): string => {
+    const nameArray = name.split('');
+    return nameArray[0].toLocaleUpperCase();
+  }
 
   const allAgents: activeAgentProps[] = agents;
   return (
@@ -75,7 +80,7 @@ const ActiveQueue = ({ sockets, spyAgent, stopSpy }) => {
                   }}
                     className={`rounded-full h-16 w-16 cursor-pointer hover:scale-110 transition-all ease-in-out duration-200 bg-black ${agent.isActive ? 'opacity-100' : 'opacity-40'}`}>
                     <AvatarImage src={agent.profile} />
-                    <AvatarFallback>{agent.displayName}</AvatarFallback>
+                    <AvatarFallback>{getFirstLetter(agent.displayName)}</AvatarFallback>
                   </Avatar>
                 </DrawerTrigger>
                 <DrawerContent>
@@ -85,7 +90,7 @@ const ActiveQueue = ({ sockets, spyAgent, stopSpy }) => {
                       <div className="flex-shrink-0 flex-1">
                         <Avatar className="rounded-full h-44 w-44">
                           <AvatarImage src={agent.profile} />
-                          <AvatarFallback>{agent.displayName}</AvatarFallback>
+                          <AvatarFallback>{getFirstLetter(agent.displayName)}</AvatarFallback>
                         </Avatar>
                       </div>
 

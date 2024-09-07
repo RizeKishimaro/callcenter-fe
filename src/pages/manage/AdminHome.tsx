@@ -11,7 +11,7 @@ import { RTCSession } from "jssip/lib/RTCSession";
 import axiosInstance from "../../providers/axiosClient";
 import { useDecrypt } from "../../store/hooks/useDecrypt";
 
-export default function AdminHome() {
+const AdminHome = () => {
   const [connectedSockets, setConnectedSockets] = useState([]);
   const [sipUa, setSipUa] = useState<JsSIP.UA | null>(null);
   const [session, setSession] = useState<RTCSession | null>(null);
@@ -41,6 +41,7 @@ export default function AdminHome() {
   }
 
   useEffect(() => {
+    console.log("mounted")
     // Socket connection setup
     socket.on('connect', () => {
       console.log('Supervisor connected');
@@ -121,14 +122,6 @@ export default function AdminHome() {
         });
 
         // Handling media stream for audio playback
-        session.on('addstream', (event) => {
-          const audioElement = audioRef.current;
-          if (audioElement) {
-            audioElement.srcObject = event.stream;
-            audioElement.play();
-            console.log('Playing audio from stream');
-          }
-        });
       }
     });
 
@@ -147,8 +140,7 @@ export default function AdminHome() {
   return (
     <div className="flex flex-col lg:flex-row p-3 gap-x-3">
       <div className="flex-1 flex flex-col lg:gap-y-5 md:gap-y-3">
-        <audio ref={audioElement} id="remoteAudio" autoPlay />
-        <div className="flex gap-x-3">
+        <div className="flex flex-col md:flex-row gap-x-3">
           <div className="w-3/5"><SipInfo /></div>
           <div className="w-2/5"><CallLog /></div>
         </div>
@@ -162,3 +154,4 @@ export default function AdminHome() {
   );
 }
 
+export default AdminHome

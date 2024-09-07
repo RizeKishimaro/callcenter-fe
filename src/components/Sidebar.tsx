@@ -22,32 +22,35 @@ import { Nav } from './Nav';
 
 
 const roleBasedAccess = {
+
   admin: [
     { title: 'Dashboard', label: '', icon: LayoutDashboard, variant: 'ghost', href: '/dashboard/manage' },
-    { title: 'Business', label: '', icon: Building2, variant: 'ghost', href: '/dashboard/manage/set-up' },
-    { title: 'IVR', label: '28', icon: AudioLines, variant: 'ghost', href: '/dashboard/manage/ivr' },
-    { title: 'Agent', label: '12', icon: Users2, variant: 'ghost', href: '/dashboard/manage/agent' },
-    { title: 'Campaign', label: '128', icon: ListEnd, variant: 'ghost', href: '/dashboard/manage/campaign' },
-    { title: 'CDR', label: '12', icon: ScrollText, variant: 'ghost', href: '/dashboard/manage/cdr' },
-    { title: 'Log', label: '1200', icon: FileClock, variant: 'ghost', href: '/dashboard/manage/log' },
-    { title: 'Call History', label: '300', icon: History, variant: 'ghost', href: '/dashboard/manage/call-history' },
-    { title: 'Recording', label: '120', icon: CassetteTape, variant: 'ghost', href: '/dashboard/manage/recording' },
-    { title: 'User', label: '8', icon: UserCheck, variant: 'ghost', href: '/dashboard/manage/user' },
-    { title: 'Audio Store', label: '12', icon: FolderClock, variant: 'ghost', href: '/dashboard/manage/audio-store' },
-    { title: 'Settings', label: '456', icon: Settings, variant: 'ghost', href: '/dashboard/manage/settings' },
-    { title: 'Sip(provider)', label: '128', icon: BetweenHorizonalEnd, variant: 'ghost', href: '/dashboard/manage/sip-provider' },
-    { title: 'CRM', label: '45', icon: HeartHandshake, variant: 'ghost', href: '/dashboard/manage/crm' },
+    { title: 'SetUp', label: '', icon: Building2, variant: 'ghost', href: '/dashboard/manage/admin/set-up' },
+    { title: 'IVR', label: '', icon: AudioLines, variant: 'ghost', href: '/dashboard/manage/admin/ivr' },
+    { title: 'Agent', label: '', icon: Users2, variant: 'ghost', href: '/dashboard/manage/agent' },
+    { title: 'Campaign', label: '', icon: ListEnd, variant: 'ghost', href: '/dashboard/manage/admin/campaign' },
+    // { title: 'CDR', label: '', icon: ScrollText, variant: 'ghost', href: '/dashboard/manage/cdr' },
+    // { title: 'Log', label: '', icon: FileClock, variant: 'ghost', href: '/dashboard/manage/log' },
+    { title: 'Call History', label: '', icon: History, variant: 'ghost', href: '/dashboard/manage/call-history' },
+    // { title: 'Recording', label: '', icon: CassetteTape, variant: 'ghost', href: '/dashboard/manage/recording' },
+    { title: 'User', label: '', icon: UserCheck, variant: 'ghost', href: '/dashboard/manage/admin' },
+    { title: 'Audio Store', label: '', icon: FolderClock, variant: 'ghost', href: '/dashboard/manage/audio-store' },
+    // { title: 'Settings', label: '', icon: Settings, variant: 'ghost', href: '/dashboard/manage/settings' },
+    { title: 'Sip(provider)', label: '', icon: BetweenHorizonalEnd, variant: 'ghost', href: '/dashboard/manage/admin/sip-provider' },
+    // { title: 'CRM', label: '', icon: HeartHandshake, variant: 'ghost', href: '/dashboard/manage/crm' },
   ],
   supervisor: [
-    { title: 'CDR', label: '12', icon: ScrollText, variant: 'ghost', href: '/dashboard/manage/cdr' },
-    { title: 'Log', label: '1200', icon: FileClock, variant: 'ghost', href: '/dashboard/manage/log' },
-    { title: 'Call History', label: '300', icon: History, variant: 'ghost', href: '/dashboard/manage/call-history' },
-    { title: 'Recording', label: '120', icon: CassetteTape, variant: 'ghost', href: '/dashboard/manage/recording' },
-    { title: 'User', label: '8', icon: UserCheck, variant: 'ghost', href: '/dashboard/manage/user' },
+    { title: 'Dashboard', label: '', icon: LayoutDashboard, variant: 'ghost', href: '/dashboard/manage' },
+    { title: 'Agent', label: '', icon: Users2, variant: 'ghost', href: '/dashboard/manage/agent' },
+    // { title: 'CDR', label: '', icon: ScrollText, variant: 'ghost', href: '/dashboard/manage/cdr' },
+    // { title: 'Log', label: '', icon: FileClock, variant: 'ghost', href: '/dashboard/manage/log' },
+    { title: 'Call History', label: '', icon: History, variant: 'ghost', href: '/dashboard/manage/call-history' },
+    // { title: 'Recording', label: '', icon: CassetteTape, variant: 'ghost', href: '/dashboard/manage/recording' },
+    { title: 'User', label: '', icon: UserCheck, variant: 'ghost', href: '/dashboard/manage/user' },
   ],
   agent: [
-    { title: 'Call History', label: '300', icon: History, variant: 'ghost', href: '/dashboard/manage/call-history' },
-    { title: 'Agent', label: '12', icon: Users2, variant: 'ghost', href: '/dashboard/agent' },
+    { title: 'Call History', label: '', icon: History, variant: 'ghost', href: '/dashboard/manage/call-history' },
+    { title: 'Agent', label: '', icon: Users2, variant: 'ghost', href: '/dashboard/agent/agent' },
   ],
 };
 
@@ -64,7 +67,7 @@ const Sidebar = ({ userRole, isCollapsed }: { userRole: string, isCollapsed: boo
       />
       <Separator />
       <Nav isCollapsed={isCollapsed} links={links} />
-      <Separator />
+      {/* <Separator /> */}
     </div>
   );
 };

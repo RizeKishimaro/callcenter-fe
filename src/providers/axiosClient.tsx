@@ -31,11 +31,13 @@ axiosInstance.interceptors.response.use(
 
       originalRequest._retry = true;
 
+
       try {
         const refreshToken = localStorage.getItem("refresh_token");
         if (refreshToken) {
           // Call refresh token logic here
-          const response = await axios.post(`${BACKEND_URL}/auth/refresh`, { token: refreshToken });
+          console.log(refreshToken)
+          const response = await axios.post(`${BACKEND_URL}refresh-token`, { refreshToken });
           const newTokens = response.data;
 
           // Update Redux state with new tokens
@@ -45,14 +47,14 @@ axiosInstance.interceptors.response.use(
           originalRequest.headers["Authorization"] = `Bearer ${newTokens.access_token}`;
           return axiosInstance(originalRequest);
         } else {
-          store.dispatch(logout());
+          // store.dispatch(logout());
           return Promise.reject(error);
         }
 
 
       } catch (err) {
         console.log(err)
-        store.dispatch(logout());
+        // store.dispatch(logout());
         return Promise.reject(err);
       }
     }

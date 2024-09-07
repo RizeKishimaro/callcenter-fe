@@ -12,14 +12,12 @@ export const getProfile = async () => {
   return response.data;
 };
 
-export const createSipProvider = async () => {
-  const response = await axiosInstance.post()
-}
-
 // Login function to authenticate the user
-
-export const login = async (credentials: { sipUsername: string; password: string, loginUrl: string; }) => {
-  try {
+export const login = async (credentials: {
+  sipUsername: string;
+  password: string;
+  loginUrl: string;
+}) => {
     const requestBody = credentials.loginUrl.includes("user/login")
       ? { email: credentials.sipUsername, password: credentials.password }
       : { sipName: credentials.sipUsername, password: credentials.password };
@@ -29,8 +27,4 @@ export const login = async (credentials: { sipUsername: string; password: string
     localStorage.setItem("id", payload.id)
     localStorage.setItem("adminSipUri", useEncrypt(payload.sipName))
     return response.data;
-  } catch (error) {
-    console.error("Login error:", error);
-    throw error;
-  }
 };
