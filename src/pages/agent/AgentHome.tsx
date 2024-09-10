@@ -2,7 +2,7 @@
 import { useRef, useState, useEffect, useMemo } from "react";
 import JsSIP, { UA } from "jssip";
 import { RTCSession } from "jssip/lib/RTCSession";
-import { Clock, MicOff, PhoneCall, PhoneForwarded, PhoneIcon, PhoneIncoming, PhoneOff, PhoneOffIcon } from "lucide-react";
+import { Clock, Hand, MicOff, PhoneCall, PhoneForwarded, PhoneIcon, PhoneIncoming, PhoneOff, PhoneOffIcon } from "lucide-react";
 import {
   Input,
 } from "../../components/ui/input";
@@ -32,6 +32,8 @@ const AgentHome = () => {
   const [session, setSession] = useState<RTCSession | null>(null);
   const [isCalling, setIsCalling] = useState(false);
   const [isInCall, setIsInCall] = useState(false);
+  const [isMuted, setIsMuted] = useState(false)
+  const [isHold, setIsHold] = useState(false);
   const [isRinging, setIsRinging] = useState(false);
   const [dialpadNumber, setDialpadNumber] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -174,7 +176,7 @@ const AgentHome = () => {
       setAccountStatus(true);
     })
     ua?.on("unregistered", () => {
-      // ua?.register();
+      ua?.register();
       console.log("unregistered")
       setAccountStatus(false)
     })
@@ -342,11 +344,13 @@ const AgentHome = () => {
   const muteCall = () => {
     if (session) {
       session.mute();
+      setIsMuted(true);
     }
   }
   const unmuteCall = () => {
     if (session) {
       session.unmute();
+      setIsMuted(false)
     }
   }
 
@@ -381,6 +385,19 @@ const AgentHome = () => {
       session.sendDTMF(value);
     }
   };
+  const holdCall = () => {
+    if (session) {
+      session.hold();
+      setIsHold(true);
+
+    }
+  }
+  const unHoldCall = () => {
+    if (session) {
+      session.unhold();
+      setIsHold(false);
+    }
+  }
 
 
 
@@ -578,18 +595,24 @@ const AgentHome = () => {
                               <button className="p-5 bg-red-400 rounded-full mr-3" onClick={handleHangup}>
                                 <PhoneOff />
                               </button>
-                              <button className="p-5 bg-red-400 rounded-full mr-3" onClick={handleHangup}>
-                                <PhoneOff />
-                              </button>
                               <button className="p-5 bg-red-400 rounded-full mr-3" onClick={transferCall}>
                                 <PhoneForwarded />
                               </button>
-                              <button className="p-5 bg-red-400 rounded-full mr-3" onClick={muteCall}>
+                              {!isMuted ? <button className="p-5 bg-red-400 rounded-full mr-3" onClick={muteCall}>
                                 <MicOff />
                               </button>
-                              <button className="p-5 bg-green-400 rounded-full mr-3" onClick={unmuteCall}>
-                                <MicOff />
+                                : <button className="p-5 bg-green-400 rounded-full mr-3" onClick={unmuteCall}>
+                                  <MicOff />
+                                </button>
+                              }
+                              {!isHold ? <button className="p-5 bg-red-400 rounded-full mr-3" onClick={holdCall}>
+                                <Hand />
                               </button>
+                                : <button className="p-5 bg-green-400 rounded-full mr-3" onClick={unHoldCall}>
+                                  <Hand />
+                                </button>
+                              }
+
                             </>
                           )}
                         </div>
@@ -617,7 +640,7 @@ const AgentHome = () => {
                           <div className="text-center" >
                             <Button onClick={() => {
                               handleResume()
-                              setIsPaused(false)
+                              setIsPaused(true)
                             }} variant={"secondary"}>Resume</Button>
                           </div>
 

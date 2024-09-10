@@ -1,15 +1,17 @@
+
+import React, { useState, useEffect } from 'react';
 import Draggable from 'react-draggable';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from '../ui/drawer';
-import { Button } from '../ui/button';
-import { activeAgentProps } from '../../providers/types/agent';
-import { agents } from '../../constant/agent';
+import { Drawer, DrawerClose, DrawerContent, DrawerFooter, DrawerTrigger } from '../ui/drawer';
 import { Badge } from '../ui/badge';
 
 const ActiveQueue = ({ sockets, spyAgent, stopSpy }: { sockets: any, spyAgent: any, stopSpy: any }) => {
   const containerWidth = 400; // Define the width of the container
   const containerHeight = 400; // Define the height of the container
   const iconSize = 64; // Size of the icons (h-16 w-16 in Tailwind CSS is 64px)
+
+  // State to store agents' positions
+  const [agentPositions, setAgentPositions] = useState<{ [key: string]: { top: string, left: string } }>({});
 
   // Generate random positions within the container, accounting for icon size
   const randomPosition = () => {
@@ -19,17 +21,29 @@ const ActiveQueue = ({ sockets, spyAgent, stopSpy }: { sockets: any, spyAgent: a
     };
   };
 
+  // On new data, generate positions if not already set
+  useEffect(() => {
+    const updatedPositions = { ...agentPositions };
+
+    sockets?.data?.forEach((agent: any) => {
+      if (!updatedPositions[agent.userid]) {
+        updatedPositions[agent.userid] = randomPosition(); // Assign random position if not already set
+      }
+    });
+
+    setAgentPositions(updatedPositions);
+  }, [sockets?.data]);
+
   // Calculate agent statistics
   const totalAgents = sockets?.data?.length || 0;
-  const onlineAgents = sockets?.data?.filter(agent => agent.isActive).length || 0;
+  const onlineAgents = sockets?.data?.filter((agent: any) => agent.isActive).length || 0;
   const idleAgents = totalAgents - onlineAgents;
 
   const getFirstLetter = (name: string): string => {
-    const nameArray = name.split('');
-    return nameArray[0].toLocaleUpperCase();
-  }
+    const nameArray = name?.split('');
+    return nameArray ? nameArray[0]?.toLocaleUpperCase() : "N/A";
+  };
 
-  const allAgents: activeAgentProps[] = agents;
   return (
     <div className='bg-dashboardSecondary dark:bg-dashboardSecondary-foreground rounded-md h-full px-10 py-5'>
       <div className="flex flex-col md:flex-row justify-between">
@@ -44,7 +58,7 @@ const ActiveQueue = ({ sockets, spyAgent, stopSpy }: { sockets: any, spyAgent: a
         </div>
         <div className="flex-1 flex justify-center items-center h-20">
           <h3 className='text-5xl'>
-            {sockets.onlineAgentLen || 0}
+            {sockets?.onlineAgentLen || 0}
           </h3>
           <p className='text-sm uppercase'>
             Online <br></br>
@@ -56,29 +70,29 @@ const ActiveQueue = ({ sockets, spyAgent, stopSpy }: { sockets: any, spyAgent: a
             {idleAgents}
           </h3>
           <p className='text-sm uppercase'>
-            idle <br></br>
+            Idle <br></br>
             Agents
           </p>
         </div>
       </div>
-      <div
-        className="overflow-hidden relative w-full h-[80%]"
-      >
-        {sockets?.data && sockets?.data?.map((agent) => (
+
+      <div className="overflow-hidden relative w-full h-[80%]">
+        {sockets?.data && sockets?.data?.map((agent: any) => (
           <Draggable key={agent.userid} bounds="parent">
             <div
               className={`absolute ${agent.isActive ? 'opacity-100' : 'opacity-40'}`}
-              style={randomPosition()}
+              style={agentPositions[agent.userid]} // Use the stored position for each agent
             >
               <Drawer>
                 <DrawerTrigger>
-                  <Avatar onClick={() => {
-                    console.log()
-                    if (!agent.isActive) return -1;
-                    spyAgent(agent?.sipName)
-                    return;
-                  }}
-                    className={`rounded-full h-16 w-16 cursor-pointer hover:scale-110 transition-all ease-in-out duration-200 bg-black ${agent.isActive ? 'opacity-100' : 'opacity-40'}`}>
+                  <Avatar
+                    onClick={() => {
+                      if (!agent.isActive) return -1;
+                      spyAgent(agent?.sipName);
+                      return;
+                    }}
+                    className={`rounded-full h-16 w-16 cursor-pointer hover:scale-110 transition-all ease-in-out duration-200 bg-black ${agent.isActive ? 'opacity-100' : 'opacity-40'}`}
+                  >
                     <AvatarImage src={agent.profile} />
                     <AvatarFallback>{getFirstLetter(agent.displayName)}</AvatarFallback>
                   </Avatar>
@@ -86,7 +100,6 @@ const ActiveQueue = ({ sockets, spyAgent, stopSpy }: { sockets: any, spyAgent: a
                 <DrawerContent>
                   <div className="md:w-1/3 w-full mx-auto">
                     <div className="flex p-6 space-x-6 w-full">
-                      {/* User Image on the left */}
                       <div className="flex-shrink-0 flex-1">
                         <Avatar className="rounded-full h-44 w-44">
                           <AvatarImage src={agent.profile} />
@@ -101,11 +114,12 @@ const ActiveQueue = ({ sockets, spyAgent, stopSpy }: { sockets: any, spyAgent: a
                           <div>Email:</div>
                           <div className="font-semibold">{agent.email || "-"}</div>
                           <div>Status:</div>
-                          <div className="font-semibold">{agent.isActive ? (
-                            <Badge className='bg-success text-white'>Active</Badge>
-                          ) : (
-                            <Badge className='bg-red-400 text-white'>InActive</Badge>
-                          )}
+                          <div className="font-semibold">
+                            {agent.isActive ? (
+                              <Badge className='bg-success text-white'>Active</Badge>
+                            ) : (
+                              <Badge className='bg-red-400 text-white'>Inactive</Badge>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -113,7 +127,6 @@ const ActiveQueue = ({ sockets, spyAgent, stopSpy }: { sockets: any, spyAgent: a
                     <DrawerFooter>
                       <DrawerClose onClick={stopSpy} className='w-full bg-white text-black py-2 px-2 rounded-lg'>
                         Close
-                        {/* <Button className='w-full'>Close</Button> */}
                       </DrawerClose>
                     </DrawerFooter>
                   </div>
@@ -128,3 +141,4 @@ const ActiveQueue = ({ sockets, spyAgent, stopSpy }: { sockets: any, spyAgent: a
 };
 
 export default ActiveQueue;
+

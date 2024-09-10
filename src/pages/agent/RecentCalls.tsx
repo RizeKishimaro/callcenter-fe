@@ -1,126 +1,136 @@
-
-import { useState, useEffect } from 'react';
-import { DataTable } from './datatable/data-table';
-import { Payment, columns } from "./datatable/columns";
-
-const getData = async (): Promise<Payment[]> => {
-  // Fetch data from your API here.
-  return [
-    {
-      id: "728ed52f",
-      csnumber: "09978551579",
-      agnumber: "012399009",
-      calltimemin: 1,
-      calltimesec: 65,
-      status: "ANSWER"
-    },
-    {
-      id: "id-1",
-      csnumber: "09978551579",
-      agnumber: "012399009",
-      calltimemin: 1,
-      calltimesec: 65,
-      status: "ANSWER"
-    },
-    {
-      id: "id-2",
-      csnumber: "09978551580",
-      agnumber: "012399010",
-      calltimemin: 2,
-      calltimesec: 30,
-      status: "NO ANSWER"
-    },
-    {
-      id: "id-3",
-      csnumber: "09978551581",
-      agnumber: "012399011",
-      calltimemin: 0,
-      calltimesec: 45,
-      status: "ANSWER"
-    },
-    {
-      id: "id-4",
-      csnumber: "09978551582",
-      agnumber: "012399012",
-      calltimemin: 3,
-      calltimesec: 20,
-      status: "NO ANSWER"
-    },
-    {
-      id: "id-5",
-      csnumber: "09978551583",
-      agnumber: "012399013",
-      calltimemin: 4,
-      calltimesec: 55,
-      status: "ANSWER"
-    },
-    {
-      id: "id-6",
-      csnumber: "09978551584",
-      agnumber: "012399014",
-      calltimemin: 2,
-      calltimesec: 15,
-      status: "NO ANSWER"
-    },
-    {
-      id: "id-7",
-      csnumber: "09978551585",
-      agnumber: "012399015",
-      calltimemin: 1,
-      calltimesec: 30,
-      status: "ANSWER"
-    },
-    {
-      id: "id-8",
-      csnumber: "09978551586",
-      agnumber: "012399016",
-      calltimemin: 5,
-      calltimesec: 25,
-      status: "NO ANSWER"
-    },
-    {
-      id: "id-9",
-      csnumber: "09978551587",
-      agnumber: "012399017",
-      calltimemin: 0,
-      calltimesec: 50,
-      status: "ANSWER"
-    },
-    {
-      id: "id-10",
-      csnumber: "09978551588",
-      agnumber: "012399018",
-      calltimemin: 3,
-      calltimesec: 35,
-      status: "NO ANSWER"
-    }
-  ]
-}
+import { useCallback, useEffect, useState } from "react";
+import { DataTable } from "../../components/data-table"
+import { useToast } from "../../components/ui/use-toast"
+import { columns } from "../manage/call-history/columns"
+import { PaginationState, SortingState } from "@tanstack/react-table";
+import { getAllCallHistories } from "../../service/call/callHistoryService";
+import { AxiosError } from "axios";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Input } from "../../components/ui/input";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "../../components/ui/select";
+import { Button } from "../../components/ui/button";
+import { Trash2 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../../components/ui/tooltip";
 
 const RecentCalls = () => {
-  const [data, setData] = useState<Payment[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0, // Initial page index
+    pageSize: 10, // Default page size
+  });
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [filters, setFilters] = useState({
+    startDate: "",
+    endDate: "",
+    direction: "",
+  });
+
+  const handleFilterChange = (key: string, value: string) => {
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      [key]: value,
+    }));
+  };
+  queryClient.invalidateQueries({ queryKey: "agents" });
+  const { data: callHistoryData, isError, isSuccess, isLoading, error } = useQuery({
+    queryKey: ['agents', pagination, sorting, filters],
+    queryFn: () => getAllCallHistories(pagination.pageIndex, pagination.pageSize, sorting, filters),
+  });
+
+  const clearFilters = () => {
+    setFilters({
+      startDate: "",
+      endDate: "",
+      direction: "",
+    });
+  };
+
+  const handleErrorToast = useCallback((error: Error) => {
+    const errorMessage = error.response?.data?.message || "Internal Server Error. Please tell your system administrator...";
+    toast({
+      variant: "destructive",
+      title: "Error!",
+      description: `Error: ${errorMessage}`,
+    });
+  }, [toast]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const result = await getData();
-      setData(result);
-      setLoading(false);
-    };
+    if (isError && !isLoading && error instanceof AxiosError) {
+      handleErrorToast(error);
+    }
+  }, [isLoading, isSuccess, isError, error, handleErrorToast]);
 
-    fetchData();
-  }, []);
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  const isAnyFilterApplied = Object.values(filters).some((filter) => filter !== "");
 
   return (
-    <div className='p-5'>
-      <DataTable columns={columns} data={data} filterColumn={"agnumber"} />
-    </div>
+    <section className='py-10'>
+      <div className='container'>
+        <div className="flex w-full justify-start">
+          <h1 className='mb-6 text-3xl font-bold flex-1'>All Call Histories</h1>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              {isAnyFilterApplied && (
+                <Tooltip delayDuration={0}>
+                  <TooltipTrigger asChild>
+                    <Button onClick={clearFilters} variant="ghost" className="ml-2">
+                      <Trash2 className="text-red-400 h-5 w-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    Reset
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              {/* StartDate, endDate and Direction(outgoing, incoming) */}
+              <Input
+                type="date"
+                placeholder="Start Date"
+                value={filters.startDate}
+                onChange={(e) => handleFilterChange("startDate", e.target.value)}
+              />
+              <Input
+                type="date"
+                placeholder="End Date"
+                value={filters.endDate}
+                onChange={(e) => handleFilterChange("endDate", e.target.value)}
+              />
+              <SelectGroup>
+                <Select
+                  value={filters.direction}
+                  onValueChange={(value) => handleFilterChange("direction", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectLabel>Avaliable Type</SelectLabel>
+                    <SelectItem value="outgoing">Outgoing</SelectItem>
+                    <SelectItem value="incoming">Incoming</SelectItem>
+                  </SelectContent>
+
+                </Select>
+              </SelectGroup>
+            </div>
+          </div>
+        </div>
+        {!isLoading && !isError && isSuccess && (
+          <>
+            <DataTable
+              columns={columns}
+              data={callHistoryData?.data}
+              pagination={pagination}
+              setPagination={setPagination}
+              sorting={sorting}
+              setSorting={setSorting}
+              totalRecords={callHistoryData?.meta.count} // Assuming the response contains totalRecords
+            />
+          </>
+        )}
+      </div>
+    </section>
   )
 }
 
-export default RecentCalls;
+export default RecentCalls
 

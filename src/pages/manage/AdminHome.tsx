@@ -16,7 +16,6 @@ const AdminHome = () => {
   const [sipUa, setSipUa] = useState<JsSIP.UA | null>(null);
   const [session, setSession] = useState<RTCSession | null>(null);
   const [isInCall, setIsInCall] = useState(false);
-  const audioElement = useRef<HTMLAudioElement | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null);  // Ref for the audio element
   const managerAccount = {
     sipUsername: useDecrypt(localStorage.getItem("adminSipUri") || ""),
@@ -45,8 +44,9 @@ const AdminHome = () => {
     // Socket connection setup
     socket.on('connect', () => {
       console.log('Supervisor connected');
-      socket.emit('joinStaffRoom', { room: 'staffroom' });
     });
+    socket.emit('joinStaffRoom', { room: 'staffroom' });
+
 
     socket.on('allAgentsData', (agentsData) => {
       setConnectedSockets(agentsData);
@@ -61,6 +61,7 @@ const AdminHome = () => {
       authorization_user: managerAccount.sipUsername,
       password: managerAccount.sipPassword,
       session_timers: false,
+
     };
 
     const ua = new JsSIP.UA(configuration);
@@ -70,6 +71,7 @@ const AdminHome = () => {
     });
 
     ua.on('disconnected', () => {
+      ua.register()
       console.log('SIP disconnected');
     });
 
@@ -99,12 +101,14 @@ const AdminHome = () => {
           const peerConnection = session?.connection;
 
           peerConnection.getReceivers().forEach((receiver) => {
+            console.log(receiver)
             if (receiver.track.kind === 'audio') {
-              if (audioElement.current) {
+              if (audioRef.current) {
+                console.log("received")
                 const remoteStream = new MediaStream();
                 remoteStream.addTrack(receiver.track);
-                audioElement.current.srcObject = remoteStream;
-                audioElement.current.play();
+                audioRef.current.srcObject = remoteStream;
+                audioRef.current.play();
               }
             }
           });
@@ -149,8 +153,7 @@ const AdminHome = () => {
       <div className="w-full xl:max-w-[550px] lg:mxa-w-[450px]">
         <ActiveQueue sockets={connectedSockets} spyAgent={spyAgent} stopSpy={stopSpy} />
       </div>
-      <audio ref={audioRef} style={{ display: 'none' }} />  {/* Hidden audio element */}
-    </div>
+      <audio ref={audioRef} />     </div>
   );
 }
 
