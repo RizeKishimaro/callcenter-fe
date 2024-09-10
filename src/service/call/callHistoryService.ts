@@ -36,7 +36,6 @@ export const getAllCallHistories = async (
   if (filters.direction) params.direction = filters.direction;
   if (filters.filterModel) params.filterModel = filters.filterModel;
   if (filters.filterKeyword) params.filterKeyword = filters.filterKeyword;
-  console.log(filters);
 
   try {
     const response = await axiosInstance.get(CALL_HISTORY_URL, { params });

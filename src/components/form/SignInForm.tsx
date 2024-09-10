@@ -32,21 +32,25 @@ const SignInForm = () => {
   const { mutate } = useMutation({
     mutationFn: ({ sipUsername, password, loginUrl }: { sipUsername: string; password: string; loginUrl: string }) => login({ sipUsername, password, loginUrl }),
     onSuccess: (data) => {
-      dispatch(setToken({ access_token: data?.access_token, refresh_token: data?.refresh_token, role: data?.role }))
-      toast({
-        description: "Successfully login!"
-      })
-      console.log(data)
+      dispatch(setToken({ access_token: data?.access_token, refresh_token: data?.refresh_token, role: data?.role }));
 
       const encryptedPassword = useEncrypt(form.getValues("password"));
-      const encryptedSipUsername = useEncrypt(form.getValues('sipUsername'))
-      dispatch(setUserInfo({ sipUsername: encryptedSipUsername, password: encryptedPassword }))
-      localStorage.setItem("role", data?.role)
-      if (managable) {
-        navigate("/dashboard/manage")
-      } else {
-        navigate("/dashboard/agent")
-      }
+      const encryptedSipUsername = useEncrypt(form.getValues('sipUsername'));
+      dispatch(setUserInfo({ sipUsername: encryptedSipUsername, password: encryptedPassword }));
+
+      // Determine the path to navigate based on the user type
+      // const isManageable = form.getValues('sipUsername').includes('@');
+      // if (isManageable) {
+      //   navigate("/dashboard/manage");
+      // } else {
+      //   navigate("/dashboard/agent");
+      // }
+
+      navigate('/dashboard')
+
+      toast({
+        description: "Successfully logged in!"
+      });
     },
     onError: (error) => {
       if (error?.response?.data?.statusCode == 400 || error?.response?.data?.statusCode == 401) {

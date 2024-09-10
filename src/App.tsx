@@ -7,7 +7,7 @@ import ProtectedRoute from './providers/guards/ProtectedRoute'
 import AgentHome from './pages/agent/AgentHome'
 import RecentCalls from './pages/agent/RecentCalls'
 import SetUp from './pages/manage/SetUp'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Toaster } from './components/ui/toaster'
 import Agents from './pages/manage/agent/Agents'
 import CreateAgent from './pages/manage/agent/CreateAgent'
@@ -20,24 +20,34 @@ import AudioStore from './pages/manage/audio-store/AudioStore'
 import Ivr from './pages/manage/ivr/Ivr'
 import CreateUser from './pages/manage/user/CreateUser'
 import CallHistory from './pages/manage/call-history/CallHistory'
-import SipProviderComponent from './pages/admin/components/SipProviderComponent'
+import { useSelector } from 'react-redux'
 import AdminHome from './pages/manage/AdminHome'
 
 function App() {
-  const role = localStorage.getItem('role') || '';
-  const [userRole, setUserRole] = useState<string>(role);
   const navigate = useNavigate();
+
+  // Use useSelector to get the user's role from the Redux store
+  const userRole = useSelector((state: any) => state.auth.role);
+  const accessToken = useSelector((state: any) => state.auth.access_token);
+
   useEffect(() => {
-
-    const token = localStorage.getItem("access_token") || "";
-    if (!token) {
-      navigate("/sign-in")
+    if (!accessToken) {
+      navigate('/sign-in');
+    } else {
+      console.log("User Role:", userRole); // Debugging output
     }
-    if(userRole == '') return navigate("/sign-in")
-    // const payload: JWTTokenTypes = jwtDecode(token) || "";
-    // setUserRole("admin")
+  }, [accessToken, userRole, navigate]);
 
-  }, [])
+  useEffect(() => {
+    if (userRole) {
+      // Trigger navigation based on the userRole
+      if (userRole === 'admin' || userRole === 'supervisor') {
+        navigate('/dashboard/manage');
+      } else if (userRole === 'agent') {
+        navigate('/dashboard/agent');
+      }
+    }
+  }, [userRole, navigate]);
 
   return (
     <div>

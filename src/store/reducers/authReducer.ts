@@ -52,12 +52,10 @@ const authSlice = createSlice({
       action: PayloadAction<{
         sipUsername: string;
         password: string;
-        campaign_name: string;
       }>
     ) => {
       state.sipUsername = action.payload.sipUsername;
       state.password = action.payload.password;
-      state.campaign_name = action.payload.campaign_name;
       localStorage.setItem("sipUsername", state.sipUsername);
       localStorage.setItem("password", state.password);
     },
