@@ -33,6 +33,7 @@ function App() {
     if (!token) {
       navigate("/sign-in")
     }
+    if(userRole == '') return navigate("/sign-in")
     // const payload: JWTTokenTypes = jwtDecode(token) || "";
     // setUserRole("admin")
 
