@@ -29,6 +29,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userRole }) => {
     setIsCollapsed(size <= navCollapsedSize);
   };
 
+
   const handleErrorToast = useCallback((error: Error) => {
     const errorMessage = error.response?.data?.message || "Internal Server Error. Please tell your system administrator...";
     toast({

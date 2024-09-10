@@ -4,13 +4,10 @@ import SignIn from './pages/auth/SignIn'
 import Home from './pages/Home'
 import DashboardLayout from './layouts/DashboardLayout'
 import ProtectedRoute from './providers/guards/ProtectedRoute'
-import AdminHome from './pages/manage/AdminHome'
 import AgentHome from './pages/agent/AgentHome'
 import RecentCalls from './pages/agent/RecentCalls'
 import SetUp from './pages/manage/SetUp'
-import { jwtDecode } from 'jwt-decode';
-import { useEffect, useState } from 'react'
-import { JWTTokenTypes } from './providers/types/jwttypes'
+import { useEffect } from 'react'
 import { Toaster } from './components/ui/toaster'
 import Agents from './pages/manage/agent/Agents'
 import CreateAgent from './pages/manage/agent/CreateAgent'
@@ -24,6 +21,7 @@ import Ivr from './pages/manage/ivr/Ivr'
 import CreateUser from './pages/manage/user/CreateUser'
 import CallHistory from './pages/manage/call-history/CallHistory'
 import { useSelector } from 'react-redux'
+import AdminHome from './pages/manage/AdminHome'
 
 function App() {
   const navigate = useNavigate();
@@ -59,6 +57,8 @@ function App() {
         <Route path='/dashboard' element={<DashboardLayout userRole={userRole} />} >
           <Route path='manage' element={<ProtectedRoute role={userRole} allowedRoles={['admin', 'supervisor']} />} >
             <Route index element={<AdminHome />} />
+            <Route path='set-up' element={<SetUp />} />
+            <Route path="agent" element={<Agents />} />
             <Route path='call-history' element={<CallHistory />} />
             <Route path='audio-store' element={<AudioStore />} />
             {/* both supervisor and admin can access this route"agent" how can I do? */}
