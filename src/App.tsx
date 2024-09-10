@@ -23,21 +23,33 @@ import AudioStore from './pages/manage/audio-store/AudioStore'
 import Ivr from './pages/manage/ivr/Ivr'
 import CreateUser from './pages/manage/user/CreateUser'
 import CallHistory from './pages/manage/call-history/CallHistory'
+import { useSelector } from 'react-redux'
 
 function App() {
-  const role = localStorage.getItem('role') || '';
-  const [userRole, setUserRole] = useState<string>(role);
   const navigate = useNavigate();
-  useEffect(() => {
-    const token = localStorage.getItem("access_token") || "";
-    if (!token) {
-      navigate("/sign-in")
-    }
-    if(userRole == '') return navigate("/sign-in")
-    // const payload: JWTTokenTypes = jwtDecode(token) || "";
-    // setUserRole("admin")
 
-  }, [])
+  // Use useSelector to get the user's role from the Redux store
+  const userRole = useSelector((state: any) => state.auth.role);
+  const accessToken = useSelector((state: any) => state.auth.access_token);
+
+  useEffect(() => {
+    if (!accessToken) {
+      navigate('/sign-in');
+    } else {
+      console.log("User Role:", userRole); // Debugging output
+    }
+  }, [accessToken, userRole, navigate]);
+
+  useEffect(() => {
+    if (userRole) {
+      // Trigger navigation based on the userRole
+      if (userRole === 'admin' || userRole === 'supervisor') {
+        navigate('/dashboard/manage');
+      } else if (userRole === 'agent') {
+        navigate('/dashboard/agent');
+      }
+    }
+  }, [userRole, navigate]);
 
   return (
     <div>
