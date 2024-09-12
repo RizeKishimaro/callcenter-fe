@@ -1,16 +1,30 @@
 import { useCallback, useEffect, useState } from "react";
-import { DataTable } from "../../../components/data-table"
-import { useToast } from "../../../components/ui/use-toast"
+import { DataTable } from "../../../components/data-table";
+import { useToast } from "../../../components/ui/use-toast";
 import { columns } from "./columns";
 import { PaginationState, SortingState } from "@tanstack/react-table";
 import { getAllCallHistories } from "../../../service/call/callHistoryService";
 import { AxiosError } from "axios";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "../../../components/ui/input";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "../../../components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "../../../components/ui/select";
 import { Button } from "../../../components/ui/button";
 import { Trash2 } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../../../components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "../../../components/ui/tooltip";
+import { useHandleErrorToast } from "../../../store/hooks/useHandleErrorToast";
+import { usePaginatedQuery } from "../../../store/hooks/usePaginationQuery";
 
 const CallHistory = () => {
   const { toast } = useToast();
@@ -24,19 +38,6 @@ const CallHistory = () => {
     endDate: "",
     direction: "",
   });
-
-  const handleFilterChange = (key: string, value: string) => {
-    setFilters((prevFilters) => ({
-      ...prevFilters,
-      [key]: value,
-    }));
-  };
-
-  const { data: callHistoryData, isError, isSuccess, isLoading, error } = useQuery({
-    queryKey: ['agents', pagination, sorting, filters],
-    queryFn: () => getAllCallHistories(pagination.pageIndex, pagination.pageSize, sorting, filters),
-    keepPreviousData: true,
-  });
   const clearFilters = () => {
     setFilters({
       startDate: "",
@@ -45,14 +46,34 @@ const CallHistory = () => {
     });
   };
 
-  const handleErrorToast = useCallback((error: Error) => {
-    const errorMessage = error.response?.data?.message || "Internal Server Error. Please tell your system administrator...";
-    toast({
-      variant: "destructive",
-      title: "Error!",
-      description: `Error: ${errorMessage}`,
-    });
-  }, [toast]);
+  const handleErrorToast = useCallback(
+    (error: Error) => {
+      const errorMessage =
+        error.response?.data?.message ||
+        "Internal Server Error. Please tell your system administrator...";
+      toast({
+        variant: "destructive",
+        title: "Error!",
+        description: `Error: ${errorMessage}`,
+      });
+    },
+    [toast],
+  );
+
+  const {
+    data: callHistoryData,
+    isError,
+    isSuccess,
+    isLoading,
+    error,
+  } = usePaginatedQuery({
+    queryKey: "agents",
+    queryFn: (pageIndex, pageSize, sorting, filters) =>
+      getAllCallHistories(pageIndex, pageSize, sorting, filters),
+    pagination,
+    sorting,
+    filters,
+  });
 
   useEffect(() => {
     if (isError && !isLoading && error instanceof AxiosError) {
@@ -60,25 +81,29 @@ const CallHistory = () => {
     }
   }, [isLoading, isSuccess, isError, error, handleErrorToast]);
 
-  const isAnyFilterApplied = Object.values(filters).some((filter) => filter !== "");
+  const isAnyFilterApplied = Object.values(filters).some(
+    (filter) => filter !== "",
+  );
 
   return (
-    <section className='py-10'>
-      <div className='container'>
+    <section className="py-10">
+      <div className="container">
         <div className="flex w-full justify-start">
-          <h1 className='mb-6 text-3xl font-bold flex-1'>All Call Histories</h1>
+          <h1 className="mb-6 text-3xl font-bold flex-1">All Call Histories</h1>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               {isAnyFilterApplied && (
                 <Tooltip delayDuration={0}>
                   <TooltipTrigger asChild>
-                    <Button onClick={clearFilters} variant="ghost" className="ml-2">
+                    <Button
+                      onClick={clearFilters}
+                      variant="ghost"
+                      className="ml-2"
+                    >
                       <Trash2 className="text-red-400 h-5 w-5" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent side="right">
-                    Reset
-                  </TooltipContent>
+                  <TooltipContent side="right">Reset</TooltipContent>
                 </Tooltip>
               )}
               {/* StartDate, endDate and Direction(outgoing, incoming) */}
@@ -86,7 +111,9 @@ const CallHistory = () => {
                 type="date"
                 placeholder="Start Date"
                 value={filters.startDate}
-                onChange={(e) => handleFilterChange("startDate", e.target.value)}
+                onChange={(e) =>
+                  handleFilterChange("startDate", e.target.value)
+                }
               />
               <Input
                 type="date"
@@ -97,7 +124,9 @@ const CallHistory = () => {
               <SelectGroup>
                 <Select
                   value={filters.direction}
-                  onValueChange={(value) => handleFilterChange("direction", value)}
+                  onValueChange={(value) =>
+                    handleFilterChange("direction", value)
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Type" />
@@ -107,7 +136,6 @@ const CallHistory = () => {
                     <SelectItem value="outgoing">Outgoing</SelectItem>
                     <SelectItem value="incoming">Incoming</SelectItem>
                   </SelectContent>
-
                 </Select>
               </SelectGroup>
             </div>
@@ -128,7 +156,7 @@ const CallHistory = () => {
         )}
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default CallHistory
+export default CallHistory;
