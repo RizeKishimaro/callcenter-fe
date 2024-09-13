@@ -7,15 +7,21 @@ export const useHandleErrorToast = () => {
 
   return useCallback(
     (error: Error | AxiosError) => {
-      const errorMessage =
-        (error as AxiosError)?.response?.data?.message ||
-        "Internal Server Error. Please tell your system administrator...";
+      let errorMessage = "";
+      if (
+        error?.response?.data?.statusCode == 400 ||
+        error?.response?.data?.statusCode == 401
+      ) {
+        errorMessage = (error as AxiosError)?.response?.data?.message;
+      } else {
+        errorMessage = "Internal Server Error. Please tell your system administrator...";
+      }
       toast({
         variant: "destructive",
         title: "Error!",
         description: `Error: ${errorMessage}`,
       });
     },
-    [toast]
+    [toast],
   );
 };
