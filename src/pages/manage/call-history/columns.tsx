@@ -36,26 +36,26 @@ export interface CallHistory {
 }
 
 export const columns: ColumnDef<CallHistory>[] = [
-    {
-        accessorKey: "actions",
-        header: "Actions",
-        cell: ({ row }) => {
-            const callHistory = row.original;
+    // {
+    //     accessorKey: "actions",
+    //     header: "Actions",
+    //     cell: ({ row }) => {
+    //         const callHistory = row.original;
 
-            return (
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="w-full">
-                            Actions
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start">
-                        <DropdownMenuItem>Delete</DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            );
-        },
-    },
+    //         return (
+    //             <DropdownMenu>
+    //                 <DropdownMenuTrigger asChild>
+    //                     <Button variant="outline" className="w-full">
+    //                         Actions
+    //                     </Button>
+    //                 </DropdownMenuTrigger>
+    //                 <DropdownMenuContent align="start">
+    //                     <DropdownMenuItem>Delete</DropdownMenuItem>
+    //                 </DropdownMenuContent>
+    //             </DropdownMenu>
+    //         );
+    //     },
+    // },
     {
         accessorKey: "id",
         header: ({ column }) => (

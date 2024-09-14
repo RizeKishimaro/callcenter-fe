@@ -107,25 +107,4 @@ export const columns: ColumnDef<User>[] = [
             return <div className="font-medium">{formatted}</div>
         }
     },
-    {
-        accessorKey: 'actions',
-        header: "Action",
-        cell: ({ row }) => {
-            const agent = row.original
-
-            return (
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant='outline' className="w-full">
-                            Action
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align='start'>
-                        <DropdownMenuItem>Delete</DropdownMenuItem>
-                        <DropdownMenuItem>Update</DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            )
-        }
-    },
 ]
