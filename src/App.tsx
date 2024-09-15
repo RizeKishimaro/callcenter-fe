@@ -22,6 +22,7 @@ import CreateUser from './pages/manage/user/CreateUser'
 import CallHistories from './pages/manage/call-history/CallHistory'
 import { useSelector } from 'react-redux'
 import AdminHome from './pages/manage/AdminHome'
+import SipProviderForm from './components/form/SipProviderForm'
 
 function App() {
   const navigate = useNavigate();
@@ -38,22 +39,11 @@ function App() {
     }
   }, [accessToken, userRole, navigate]);
 
-  // useEffect(() => {
-  //   if (userRole) {
-  //     // Trigger navigation based on the userRole
-  //     if (userRole === 'admin' || userRole === 'supervisor') {
-  //       navigate('/dashboard/manage');
-  //     } else if (userRole === 'agent') {
-  //       navigate('/dashboard/agent');
-  //     }
-  //   }
-  // }, [userRole, navigate]);
-
   return (
     <div>
       <Routes>
         <Route path='/' element={<Home />} />
-        {/* <Route path='/setup' element={<Home />} /> */}
+        {/* <Route path='/setup' element={<SipProviderForm />} /> */}
         <Route path='/dashboard' element={<DashboardLayout userRole={userRole} />} >
           <Route path='manage' element={<ProtectedRoute role={userRole} allowedRoles={['admin', 'supervisor']} />} >
             <Route index element={<AdminHome />} />
@@ -70,7 +60,8 @@ function App() {
               <Route path='create' element={<CreateUser />} />
               <Route path='ivr' element={<Ivr />} />
               <Route path='campaign' element={<Campaigns />} />
-              <Route path='campaign/create' element={<CreateCampaign />} />
+              <Route path='campaign/create' element={<CreateSipProvider />} />
+              {/* <Route path='campaign/create' element={<CreateCampaign />} /> */}
               <Route path='sip-provider' element={<SipProviders />} />
               <Route path='sip-provider/create' element={<CreateSipProvider />} />
             </Route>

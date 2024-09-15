@@ -30,7 +30,7 @@ const IvrTreeForm = () => {
 
   const { data: CampaignData, isError: CampaignIsError, isLoading: CampaignIsLoading, error: CampaignError } = useQuery({
     queryKey: ['Campaigns'],
-    queryFn: getAllCampaigns(0, 10, []),
+    queryFn: () => getAllCampaigns(0, 10, []),
   });
 
   const { data: IVRData, isError: IVRIsError, isLoading: IVRIsLoading, error: IVRError, isSuccess: IVRIsSuccess } = useQuery({
@@ -211,9 +211,15 @@ const IvrTreeForm = () => {
     //   }
     // }
 
+    // Extract filename from path
+    const filenameWithExtension = node?.label?.split('/').pop() || '';
+
+    // Remove file extension
+    const filename = filenameWithExtension.replace(/\.[^/.]+$/, '');
+
     let ivrDtos = [{
       id: node.id,
-      name: node.label,
+      name: filename,
       campaignId: campaignId,
       parentId: node.parentId ?? undefined,
       branch: node.branch || 1,

@@ -59,9 +59,9 @@ export const columns = ({
       const codeLists: string[] = codecs.split(",");
 
       return (
-        <div>
+        <div className="flex flex-row flex-wrap">
           {codeLists.map((codec, index) => (
-            <Badge key={index} className="mx-2">
+            <Badge key={index} className="mx-1">
               {codec}
             </Badge>
           ))}

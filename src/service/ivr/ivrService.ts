@@ -29,6 +29,9 @@ export const bulkCreateIvr = async ({
     `${IVR_URL}/bulk-create/${campaignId}`,
     {
       ivrs,
+    },
+    {
+      timeout: 60000,
     }
   );
   return response.data;
