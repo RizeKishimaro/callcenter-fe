@@ -25,7 +25,6 @@ export const getAllAgents = async (
 };
 
 export const createAgent = async (formData: FormData) => {
-  console.log("Over")
   const response = await axiosInstance.post(`${AGENT_URL}/register`, formData);
   return response.data;
 };

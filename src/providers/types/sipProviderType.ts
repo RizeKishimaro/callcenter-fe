@@ -5,4 +5,7 @@ export interface SipProviderType {
   transport: string;
   host: string;
   extension: string;
+  prefix?: string;
+  concurrentlimit?: number;
+  strategy?: string;
 }

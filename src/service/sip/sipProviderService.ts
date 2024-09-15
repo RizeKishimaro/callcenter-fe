@@ -23,6 +23,28 @@ export const getAllSipProviders = async (
   return response.data;
 };
 
+export const createSetupSipProvider = async (body: {
+  provider_number: string;
+  name: string;
+  codecs: string;
+  transport: string;
+  host: string;
+  extension: string;
+  concurrentlimit: number;
+  strategy: string;
+  prefix: string;
+}) => {
+  try {
+    const response = await axiosInstance.post(
+      `${SIP_PROVIDER_URL}/set-up`,
+      body
+    );
+    return response.data;
+  } catch (error) {
+    return error;
+  }
+};
+
 export const createSipProvider = async (body: {
   provider_number: string;
   name: string;
@@ -31,8 +53,12 @@ export const createSipProvider = async (body: {
   host: string;
   extension: string;
 }) => {
-  const response = await axiosInstance.post(SIP_PROVIDER_URL, body);
-  return response.data;
+  try {
+    const response = await axiosInstance.post(SIP_PROVIDER_URL, body);
+    return response.data;
+  } catch (error) {
+    return error;
+  }
 };
 
 export const updateSipProvider = async (
