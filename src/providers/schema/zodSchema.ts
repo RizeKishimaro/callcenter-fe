@@ -1,4 +1,4 @@
-import { userSchema } from './zodSchema';
+import { userSchema } from "./zodSchema";
 import { z } from "zod";
 
 export const signInSchema = z.object({
@@ -49,6 +49,12 @@ export const sipProviderSchema = z.object({
   transport: transportSchema,
   host: z.string(),
   extension: extensionSchema,
+  prefix: z
+    .string()
+    .min(3, "At least 3 characters")
+    .max(10, "Maximum 10 characters are allowed."),
+  concurrentlimit: z.number().min(1, "Concurrent Limit is required!."),
+  strategy: campaignStrategy,
 });
 
 export const campaginSchema = z.object({
@@ -83,7 +89,7 @@ export const agentSchema = z.object({
     .nullable()
     .refine((file) => validateProfileFile(file)),
   campaignId: z.number(),
-  sipProviderId: z.number(),
+  // sipProviderId: z.number(),
 });
 
 // Define file type for IVR file upload
@@ -115,13 +121,16 @@ export const userSchema = z.object({
     .string()
     .min(3, "Sip name must be at least 3 characters")
     .max(10, "Maximum length is 10 characters")
-    .regex(sipNameRegex, "Sip name can only contain letters, numbers, underscores, and hyphens"),
+    .regex(
+      sipNameRegex,
+      "Sip name can only contain letters, numbers, underscores, and hyphens"
+    ),
   email: z.string().email(),
   password: z
     .string()
     .min(5, "Minimum 5 characters are allowd!")
     .regex(passwordRegex, "Password can only contain alphanumeric characters"),
-    role: userRole
+  role: userRole,
 });
 
 export type userSchemaType = z.infer<typeof userSchema>;

@@ -211,9 +211,15 @@ const IvrTreeForm = () => {
     //   }
     // }
 
+    // Extract filename from path
+    const filenameWithExtension = node?.label?.split('/').pop() || '';
+
+    // Remove file extension
+    const filename = filenameWithExtension.replace(/\.[^/.]+$/, '');
+
     let ivrDtos = [{
       id: node.id,
-      name: node.label,
+      name: filename,
       campaignId: campaignId,
       parentId: node.parentId ?? undefined,
       branch: node.branch || 1,

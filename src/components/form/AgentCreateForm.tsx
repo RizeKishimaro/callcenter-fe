@@ -16,10 +16,13 @@ import { FileUploader } from "react-drag-drop-files";
 import { Campaign, SipProvider } from "../../pages/manage/agent/columns";
 import { createAgent } from "../../service/agent/agentService";
 import { useNavigate } from "react-router-dom";
+import { useHandleErrorToast } from "../../store/hooks/useHandleErrorToast";
 
 const AgentCreateForm = () => {
+
   const { toast } = useToast();
   const navigate = useNavigate();
+  const handleErrorToast = useHandleErrorToast()
 
   const { data: CampaignData, isLoading: CampaignIsLoading, isSuccess: CampaignIsSuccess, isError: CampaignIsError, error: CampaignError } = useQuery({
     queryKey: ['campaigns'],
@@ -31,25 +34,19 @@ const AgentCreateForm = () => {
     queryFn: () => getAllSipProviders(0, 25, [])
   })
 
+
   const { mutate, isError, error } = useMutation({
-    mutationFn: async ({ name, sipName, password, profile, campaignId, sipProviderId }: {
-      name: string, sipName: string, password: string, profile: File, campaignId: number, sipProviderId: number
+    mutationFn: async ({ name, sipName, password, profile, campaignId }: {
+      name: string, sipName: string, password: string, profile: File, campaignId: number,
     }) => {
-      console.log("Hello there")
-
-      const formattedSipName = `${sipName}`;
-
-      console.log("Formatted name : ", formattedSipName)
-
       const formData = new FormData();
       formData.append('name', name)
-      formData.append('sipName', formattedSipName);
+      formData.append('sipName', sipName);
       formData.append('password', password)
       formData.append('profile', profile)
       formData.append('campaignId', campaignId)
-      formData.append('sipProviderId', sipProviderId)
+      // formData.append('sipProviderId', sipProviderId)
 
-      console.log("Hello here")
 
       await createAgent(formData);
     },
@@ -60,15 +57,6 @@ const AgentCreateForm = () => {
       navigate("/dashboard/manage/agent")
     }
   })
-
-  const handleErrorToast = useCallback((error: Error) => {
-    const errorMessage = error.response?.data?.message || "Internal Server Error. Please tell your system administrator...";
-    toast({
-      variant: "destructive",
-      title: "Error!",
-      description: `Error: ${errorMessage}`,
-    });
-  }, [toast]);
 
   useEffect(() => {
     if (CampaignError && !CampaignIsLoading && CampaignError instanceof AxiosError) {
@@ -82,13 +70,6 @@ const AgentCreateForm = () => {
     }
   }, [isError, error, handleErrorToast])
 
-  useEffect(() => {
-    if (SipProviderIsError && !SipProviderIsLoading && SipProviderError instanceof AxiosError) {
-      handleErrorToast(SipProviderError);
-    }
-  }, [SipProviderIsLoading, SipProviderIsSuccess, SipProviderIsError, SipProviderError, handleErrorToast]);
-
-
   const form = useForm<agentSchemaType>({
     resolver: zodResolver(agentSchema), defaultValues: {
       name: "",
@@ -96,13 +77,12 @@ const AgentCreateForm = () => {
       password: "",
       profile: undefined,
       campaignId: 1,
-      sipProviderId: 1,
     }
   })
 
   function onSubmit(values: z.infer<typeof agentSchema>) {
-    const { name, sipName, password, profile, campaignId, sipProviderId } = values;
-    mutate({ name, sipName, password, profile, campaignId, sipProviderId })
+    const { name, sipName, password, profile, campaignId } = values;
+    mutate({ name, sipName, password, profile, campaignId })
   }
 
   return (
@@ -127,17 +107,51 @@ const AgentCreateForm = () => {
                 <FormMessage />
               </FormItem>
             )} />
-            <FormField control={form.control} name='sipName' render={({ field }) => (
-              <FormItem>
-                <FormLabel>
-                  Sip Name
-                </FormLabel>
-                <FormControl>
-                  <Input placeholder='Enter your sip name' {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
+            <div className="flex space-x-3">
+              <FormField control={form.control} name='sipName' render={({ field }) => (
+                <FormItem className="flex-1">
+                  <FormLabel>
+                    Sip Name
+                  </FormLabel>
+                  <FormControl>
+                    <Input placeholder='Enter your sip name' {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              {!CampaignIsLoading && CampaignIsSuccess && !CampaignIsError && (
+                <FormField
+                  control={form.control}
+                  name="campaignId"
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <FormLabel>Select Campaign</FormLabel>
+                      <FormControl>
+                        <SelectGroup>
+                          <Select
+                            onValueChange={(value) => field.onChange(+value)}
+                            value={field.value?.toString() || ''}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select Campaign" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectLabel>Campaign Options</SelectLabel>
+                              {!CampaignIsLoading && CampaignIsSuccess && !CampaignIsError && CampaignData?.data?.map((campaign: any, index: number) => (
+                                <SelectItem key={index} value={campaign?.id?.toString()}>{campaign?.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </SelectGroup>
+
+                      </FormControl>
+
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+
+              )}
+            </div>
             <FormField control={form.control} name='password' render={({ field }) => (
               <FormItem>
                 <FormLabel>
@@ -175,71 +189,8 @@ const AgentCreateForm = () => {
                 </FormItem>
               )}
             />
-            <div className="flex space-x-3">
-              {!CampaignIsLoading && CampaignIsSuccess && !CampaignIsError && (
-                <FormField
-                  control={form.control}
-                  name="campaignId"
-                  render={({ field }) => (
-                    <FormItem className="flex-1">
-                      <FormLabel>Select Transport Type</FormLabel>
-                      <FormControl>
-                        <SelectGroup>
-                          <Select
-                            onValueChange={(value) => field.onChange(+value)}
-                            value={field.value?.toString() || ''}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select Campaign" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectLabel>Campaign Options</SelectLabel>
-                              {!CampaignIsLoading && CampaignIsSuccess && !CampaignIsError && CampaignData?.data?.map((campaign: any, index: number) => (
-                                <SelectItem key={index} value={campaign?.id?.toString()}>{campaign?.name}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </SelectGroup>
-
-                      </FormControl>
-
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-
-              )}
-              <FormField
-                control={form.control}
-                name="sipProviderId"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel>Select Transport Type</FormLabel>
-                    <FormControl>
-                      <SelectGroup>
-                        <Select
-                          onValueChange={(value) => field.onChange(+value)}
-                          value={field.value?.toString() || ''}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select Sip Provider" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectLabel>Sip Provider Options</SelectLabel>
-                            {!SipProviderIsLoading && SipProviderIsSuccess && !CampaignIsError && SipProviderData?.data?.map((sipProvider: any, index: number) => (
-                              <SelectItem key={index} value={sipProvider?.id?.toString()}>{sipProvider?.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </SelectGroup>
-
-                    </FormControl>
-
-                    <FormMessage />
-                  </FormItem>
-                )} />
-            </div>
             <div className="w-full text-end">
-              <Button type='submit' className='px-10'>Create</Button>
+              <Button type="submit" className='px-10'>Create</Button>
             </div>
           </form>
         </Form>

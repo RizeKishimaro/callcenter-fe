@@ -12,16 +12,17 @@ import { Toaster } from './components/ui/toaster'
 import Agents from './pages/manage/agent/Agents'
 import CreateAgent from './pages/manage/agent/CreateAgent'
 import User from './pages/manage/user/User'
-import Campaign from './pages/manage/campaign/Campaign'
+import Campaigns from './pages/manage/campaign/Campaign'
 import CreateCampaign from './pages/manage/campaign/CreateCampaign'
-import SipProvider from './pages/manage/sip-provider/SipProvider'
+import SipProviders from './pages/manage/sip-provider/SipProvider'
 import CreateSipProvider from './pages/manage/sip-provider/CreateSipProvider'
 import AudioStore from './pages/manage/audio-store/AudioStore'
 import Ivr from './pages/manage/ivr/Ivr'
 import CreateUser from './pages/manage/user/CreateUser'
-import CallHistory from './pages/manage/call-history/CallHistory'
+import CallHistories from './pages/manage/call-history/CallHistory'
 import { useSelector } from 'react-redux'
 import AdminHome from './pages/manage/AdminHome'
+import SipProviderForm from './components/form/SipProviderForm'
 
 function App() {
   const navigate = useNavigate();
@@ -38,28 +39,17 @@ function App() {
     }
   }, [accessToken, userRole, navigate]);
 
-  // useEffect(() => {
-  //   if (userRole) {
-  //     // Trigger navigation based on the userRole
-  //     if (userRole === 'admin' || userRole === 'supervisor') {
-  //       navigate('/dashboard/manage');
-  //     } else if (userRole === 'agent') {
-  //       navigate('/dashboard/agent');
-  //     }
-  //   }
-  // }, [userRole, navigate]);
-
   return (
     <div>
       <Routes>
         <Route path='/' element={<Home />} />
-        {/* <Route path='/setup' element={<Home />} /> */}
+        {/* <Route path='/setup' element={<SipProviderForm />} /> */}
         <Route path='/dashboard' element={<DashboardLayout userRole={userRole} />} >
           <Route path='manage' element={<ProtectedRoute role={userRole} allowedRoles={['admin', 'supervisor']} />} >
             <Route index element={<AdminHome />} />
             <Route path='set-up' element={<SetUp />} />
             <Route path="agent" element={<Agents />} />
-            <Route path='call-history' element={<CallHistory />} />
+            <Route path='call-history' element={<CallHistories />} />
             <Route path='audio-store' element={<AudioStore />} />
             {/* both supervisor and admin can access this route"agent" how can I do? */}
             <Route path='agent' element={<Agents />} />
@@ -69,9 +59,10 @@ function App() {
               <Route path='set-up' element={<SetUp />} />
               <Route path='create' element={<CreateUser />} />
               <Route path='ivr' element={<Ivr />} />
-              <Route path='campaign' element={<Campaign />} />
-              <Route path='campaign/create' element={<CreateCampaign />} />
-              <Route path='sip-provider' element={<SipProvider />} />
+              <Route path='campaign' element={<Campaigns />} />
+              <Route path='campaign/create' element={<CreateSipProvider />} />
+              {/* <Route path='campaign/create' element={<CreateCampaign />} /> */}
+              <Route path='sip-provider' element={<SipProviders />} />
               <Route path='sip-provider/create' element={<CreateSipProvider />} />
             </Route>
           </Route>
