@@ -4,13 +4,10 @@ import SignIn from './pages/auth/SignIn'
 import Home from './pages/Home'
 import DashboardLayout from './layouts/DashboardLayout'
 import ProtectedRoute from './providers/guards/ProtectedRoute'
-import AdminHome from './pages/manage/AdminHome'
 import AgentHome from './pages/agent/AgentHome'
 import RecentCalls from './pages/agent/RecentCalls'
 import SetUp from './pages/manage/SetUp'
-import { jwtDecode } from 'jwt-decode';
-import { useEffect, useState } from 'react'
-import { JWTTokenTypes } from './providers/types/jwttypes'
+import { useEffect } from 'react'
 import { Toaster } from './components/ui/toaster'
 import Agents from './pages/manage/agent/Agents'
 import CreateAgent from './pages/manage/agent/CreateAgent'
@@ -23,20 +20,34 @@ import AudioStore from './pages/manage/audio-store/AudioStore'
 import Ivr from './pages/manage/ivr/Ivr'
 import CreateUser from './pages/manage/user/CreateUser'
 import CallHistory from './pages/manage/call-history/CallHistory'
+import { useSelector } from 'react-redux'
+import AdminHome from './pages/manage/AdminHome'
 
 function App() {
-  const role = localStorage.getItem('role') || '';
-  const [userRole, setUserRole] = useState<string>(role);
   const navigate = useNavigate();
-  useEffect(() => {
-    const token = localStorage.getItem("access_token") || "";
-    if (!token) {
-      navigate("/sign-in")
-    }
-    // const payload: JWTTokenTypes = jwtDecode(token) || "";
-    // setUserRole("admin")
 
-  }, [])
+  // Use useSelector to get the user's role from the Redux store
+  const userRole = useSelector((state: any) => state.auth.role);
+  const accessToken = useSelector((state: any) => state.auth.access_token);
+
+  useEffect(() => {
+    if (!accessToken) {
+      navigate('/sign-in');
+    } else {
+      console.log("User Role:", userRole); // Debugging output
+    }
+  }, [accessToken, userRole, navigate]);
+
+  // useEffect(() => {
+  //   if (userRole) {
+  //     // Trigger navigation based on the userRole
+  //     if (userRole === 'admin' || userRole === 'supervisor') {
+  //       navigate('/dashboard/manage');
+  //     } else if (userRole === 'agent') {
+  //       navigate('/dashboard/agent');
+  //     }
+  //   }
+  // }, [userRole, navigate]);
 
   return (
     <div>
@@ -46,6 +57,8 @@ function App() {
         <Route path='/dashboard' element={<DashboardLayout userRole={userRole} />} >
           <Route path='manage' element={<ProtectedRoute role={userRole} allowedRoles={['admin', 'supervisor']} />} >
             <Route index element={<AdminHome />} />
+            <Route path='set-up' element={<SetUp />} />
+            <Route path="agent" element={<Agents />} />
             <Route path='call-history' element={<CallHistory />} />
             <Route path='audio-store' element={<AudioStore />} />
             {/* both supervisor and admin can access this route"agent" how can I do? */}

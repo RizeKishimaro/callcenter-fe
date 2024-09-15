@@ -13,6 +13,8 @@ interface AuthStateProps {
   role: string;
   access_token: string;
   refresh_token: string;
+  campaign_name: string;
+
 }
 
 const initialState: AuthStateProps = {
@@ -21,6 +23,8 @@ const initialState: AuthStateProps = {
   role: "",
   access_token: "",
   refresh_token: "",
+  campaign_name: "",
+
 };
 
 const authSlice = createSlice({
@@ -52,7 +56,6 @@ const authSlice = createSlice({
     ) => {
       state.sipUsername = action.payload.sipUsername;
       state.password = action.payload.password;
-
       localStorage.setItem("sipUsername", state.sipUsername);
       localStorage.setItem("password", state.password);
     },

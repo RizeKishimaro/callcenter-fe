@@ -12,7 +12,7 @@ const SipInfo = (props: Props) => {
   const [diskSpacePercentage, setDiskSpacePercentage] = useState(0);
   const [message, setMessage] = useState()
   useEffect(() => {
-    const eventSource = new EventSource('http://localhost:3000/sysinfo');
+    const eventSource = new EventSource(`${import.meta.env.VITE_APP_BACKEND_URL}sysinfo`);
 
     eventSource.onmessage = function(event) {
       const { data } = JSON.parse(event.data);
@@ -81,8 +81,8 @@ const SipInfo = (props: Props) => {
             {
               message && message.cpu.individual.map((el, index) => {
                 return (
-                  <div>
-                    <p>Core {index}: {Math.floor(el.usage)}%</p>
+                  <div key={index}>
+                    <p key={index}>Core {index}: {Math.floor(el.usage)}%</p>
                   </div>
 
                 )

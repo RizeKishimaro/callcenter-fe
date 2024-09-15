@@ -1,4 +1,4 @@
-import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, Outlet, replace, useLocation, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import React, { useCallback, useEffect } from 'react';
 import { TooltipProvider } from '../components/ui/tooltip';
@@ -13,7 +13,7 @@ import { useEncrypt } from '../store/hooks/useEncrypt';
 import { useDecrypt } from '../store/hooks/useDecrypt';
 
 interface DashboardLayoutProps {
-  userRole: string;
+  userRole: string | null;
 }
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userRole }) => {
@@ -28,6 +28,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userRole }) => {
     setPanelSize(size);
     setIsCollapsed(size <= navCollapsedSize);
   };
+
 
   const handleErrorToast = useCallback((error: Error) => {
     const errorMessage = error.response?.data?.message || "Internal Server Error. Please tell your system administrator...";
@@ -88,8 +89,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userRole }) => {
     return () => window.removeEventListener('resize', handleWindowResize);
   }, [isCollapsed]);
 
+  console.log("the user role : ", userRole)
+
   useEffect(() => {
-    if (location.pathname === '/dashboard') {
+    if (!userRole) return navigate('/sign-in', { replace: true })
+    if (location.pathname === '/dashboard' || location.pathname === '/dashboard/') {
       switch (userRole) {
         case 'admin':
         case 'supervisor':
@@ -103,15 +107,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userRole }) => {
           break;
       }
     }
-  }, [userRole, location.pathname, navigate]);
+  }, []);
 
-  if (isLoading) return (
-    <>
-      <div className="w-screen h-screen flex justify-center items-center">
-        <Loading />
-      </div>
-    </>
-  );
+  if (isLoading) return <Loading />;
 
   return (
     <>

@@ -15,11 +15,12 @@ export const getAllCampaigns = async (
   const response = await axiosInstance.get(CAMPAIGN_URL, {
     params: {
       limit: pageSize,
-      page: pageIndex+1,
+      page: pageIndex + 1,
       sortField: sortBy,
       sortType: sortOrder,
     },
   });
+  console.log("the response : ", response.data)
   return response.data;
 };
 

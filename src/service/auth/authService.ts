@@ -1,5 +1,7 @@
 import axios from "axios";
 import axiosInstance from "../../providers/axiosClient";
+import { jwtDecode } from "jwt-decode";
+import { useEncrypt } from "../../store/hooks/useEncrypt";
 
 // Define the API endpoints
 const PROFILE_URL = "/profile";
@@ -21,6 +23,8 @@ export const login = async (credentials: {
       : { sipName: credentials.sipUsername, password: credentials.password };
 
     const response = await axios.post(credentials.loginUrl, requestBody);
-
+    const payload = jwtDecode(response.data.access_token);
+    localStorage.setItem("id", payload.id)
+    localStorage.setItem("adminSipUri", useEncrypt(payload.sipName))
     return response.data;
 };

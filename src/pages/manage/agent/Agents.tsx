@@ -20,10 +20,9 @@ const Agents = () => {
   const { data: AgentData, isError, isSuccess, isLoading, error } = useQuery({
     queryKey: ['agents', pagination, sorting],
     queryFn: () => getAllAgents(pagination.pageIndex, pagination.pageSize, sorting),
-    keepPreviousData: true,
   });
   const handleErrorToast = useCallback((error: Error) => {
-    const errorMessage = error.response?.data?.message || "Internal Server Error. Please tell your system administrator...";
+    const errorMessage = error?.response?.data?.message || "Internal Server Error. Please tell your system administrator...";
     toast({
       variant: "destructive",
       title: "Error!",
@@ -40,7 +39,7 @@ const Agents = () => {
   return (
     <section className='py-10'>
       <div className='container'>
-      <div className="flex w-full justify-between">
+        <div className="flex w-full justify-between">
           <h1 className='mb-6 text-3xl font-bold'>All Agents</h1>
           <Button>
             <Link to='/dashboard/manage/agent/create'>Create Agent</Link>
