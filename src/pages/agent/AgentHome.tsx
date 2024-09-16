@@ -44,17 +44,24 @@ const AgentHome = () => {
   const [pauseReason, setPauseReason] = useState('')
   const [isPaused, setIsPaused] = useState(false)
   const [agentData, setAgentData] = useState<any>(null);
+  const [prefix, setPrefix] = useState<string>("");
 
   const agentAccount = {
     sipUsername: useDecrypt(localStorage.getItem("sipUsername") || ""),
     sipPassword: useDecrypt(localStorage.getItem("password") || ""),
     agentId: localStorage.getItem("id") || ""
   };
+
+  console.log("agent sip name : ", agentAccount.sipUsername)
+  console.log("campaign : ", useDecrypt(localStorage.getItem("campaign") || ""))
   const getAgentInfo = async () => {
     const data = await axiosInstance.get(`/agent/${agentAccount.agentId}`);
-    console.log(data.data)
+    setPrefix(data?.data?.Campaign?.prefix)
+    console.log(data.data.Campaign.prefix)
     setAgentData(data.data);
     setProviderAddress(data.data.SipProvider.host)
+
+    console.log("MY PREFIX : ", prefix)
 
     return data
   };
@@ -73,32 +80,41 @@ const AgentHome = () => {
 
   }
 
+  useEffect(() => {
+    getAgentInfo()
+  }, [])
 
   useEffect(() => {
-    const wsSocket = new JsSIP.WebSocketInterface(`${import.meta.env.VITE_APP_WEBSOCKET_HOST}:${import.meta.env.VITE_APP_WEBSOCKET_PORT}/ws`)
-    const configuration: UAConfiguration = {
-      uri: `sip:${agentAccount.sipUsername}@${import.meta.env.VITE_APP_SIP_HOST}`,
-      sockets: [wsSocket],
-      authorization_user: agentAccount.sipUsername,
-      password: agentAccount.sipPassword,
-    };
+    if (prefix) {
+      console.log("START connnection with sip : ", prefix)
 
-    const userAgent = new JsSIP.UA(configuration);
+      const wsSocket = new JsSIP.WebSocketInterface(`${import.meta.env.VITE_APP_WEBSOCKET_HOST}:${import.meta.env.VITE_APP_WEBSOCKET_PORT}/ws`)
+      const configuration: UAConfiguration = {
+        uri: `sip:${agentAccount.sipUsername}_${prefix}@${import.meta.env.VITE_APP_SIP_HOST}`,
+        sockets: [wsSocket],
+        authorization_user: `${agentAccount.sipUsername}_${prefix}`,
+        password: agentAccount.sipPassword,
+      };
+
+      console.log("After connnection with sip : ", configuration)
 
 
-    setUa(userAgent)
+      const userAgent = new JsSIP.UA(configuration);
 
 
-    userAgent.on("disconnected", () => {
-      console.log(userAgent.status)
-    })
-    userAgent.start();
-    getAgentInfo()
+      setUa(userAgent)
 
-    return () => {
-      userAgent.stop()
-    };
-  }, []);
+
+      userAgent.on("disconnected", () => {
+        console.log(userAgent.status)
+      })
+      userAgent.start();
+
+      return () => {
+        userAgent.stop()
+      };
+    }
+  }, [prefix]);
 
   useEffect(() => {
     const applySetInvite = (number) => {
