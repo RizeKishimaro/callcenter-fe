@@ -6,16 +6,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { useToast } from '../ui/use-toast'
 import { campaginSchema, campaignSchemaType } from '../../providers/schema/zodSchema'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createCampaign } from '../../service/sip/campaignService'
 import { useDispatch } from 'react-redux'
 import { CampaignType } from '../../providers/types/campaignType'
 import { nextStep } from '../../store/reducers/setupReducer'
 import { Button } from '../ui/button'
+import { useNavigate } from 'react-router-dom'
 
 const CampaignCreateForm = () => {
     const { toast } = useToast();
     const dispatch = useDispatch();
+    const queryClient = useQueryClient();
+    const currentUrl = window.location.href;
+    const navigate = useNavigate();
     const startegyLists: string[] = ["rrmemory", "ringall", "fewestcalls", "random", "lastrecent", "rrordered"];
 
     const { mutate } = useMutation({
@@ -23,7 +27,13 @@ const CampaignCreateForm = () => {
             createCampaign({ name, concurrentlimit, strategy, prefix });
         },
         onSuccess: (data) => {
-            dispatch(nextStep());
+            queryClient.invalidateQueries({ queryKey: ['campaigns'] })
+
+            if (currentUrl.includes('/dashboard/manage/admin/campaign/create')) {
+                navigate('/dashboard/manage/admin/campaign');
+            } else {
+                dispatch(nextStep());
+            }
         },
         onError: (error) => {
             if (error?.response?.data?.statusCode == 400 || error?.response?.data?.statusCode == 422) {

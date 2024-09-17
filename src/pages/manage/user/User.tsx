@@ -18,7 +18,7 @@ const User = () => {
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const { data: AgentData, isError, isSuccess, isLoading, error } = useQuery({
-    queryKey: ['agents', pagination, sorting],
+    queryKey: ['users', pagination, sorting],
     queryFn: () => getAllUsers(pagination.pageIndex, pagination.pageSize, sorting),
     keepPreviousData: true,
   });

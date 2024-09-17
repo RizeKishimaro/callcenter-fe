@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect } from "react";
 import { useToast } from "../ui/use-toast"
 import { AxiosError } from "axios";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getAllSipProviders } from "../../service/sip/sipProviderService";
 import { getAllCampaigns } from "../../service/sip/campaignService";
 import { useForm } from "react-hook-form";
@@ -22,7 +22,8 @@ const AgentCreateForm = () => {
 
   const { toast } = useToast();
   const navigate = useNavigate();
-  const handleErrorToast = useHandleErrorToast()
+  const handleErrorToast = useHandleErrorToast();
+  const queryClient = useQueryClient();
 
   const { data: CampaignData, isLoading: CampaignIsLoading, isSuccess: CampaignIsSuccess, isError: CampaignIsError, error: CampaignError } = useQuery({
     queryKey: ['campaigns'],
@@ -51,6 +52,7 @@ const AgentCreateForm = () => {
       await createAgent(formData);
     },
     onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['agents'] });
       toast({
         description: "Successfully uploaded ivr file!",
       });

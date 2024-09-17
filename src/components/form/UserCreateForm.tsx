@@ -11,12 +11,13 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { Button } from '../ui/button'
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { Label } from "../ui/label";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createUser } from "../../service/user/userService";
 
 const UserCreateForm = () => {
     const { toast } = useToast();
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
 
     const { mutate, isSuccess } = useMutation({
         mutationFn: ({ name, sipName, email, password, role }: { name: string, sipName: string, email: string, password: string, role: 'admin' | 'supervisor' }) => createUser({ name, sipName, email, password, role }),
@@ -24,6 +25,7 @@ const UserCreateForm = () => {
             handleErrorToast(error);
         },
         onSuccess: (data) => {
+            queryClient.invalidateQueries({ queryKey: ['users'] })
             navigate('/dashboard/manage/admin')
         }
     })

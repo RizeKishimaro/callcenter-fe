@@ -21,7 +21,7 @@ export const useDeleteMutation = <T,>({
   return useMutation<T, AxiosError>({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries(queryKey);
+      queryClient.invalidateQueries({ queryKey: [queryKey] });
       toast({
         variant: "success",
         title: "Deleted!",
