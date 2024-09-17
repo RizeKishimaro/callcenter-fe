@@ -458,7 +458,7 @@ const AgentHome = () => {
               <span id="blackOverlay" className="absolute w-full h-full bg-black opacity-50" />
             </div>
           </section>
-          <audio ref={ringtoneRef} controls preload="true" loop src="/public/ringtone.mp3" className="hidden"></audio>
+          <audio ref={ringtoneRef} controls preload="true" loop src="/ringtone.mp3" className="hidden"></audio>
           <section className="relative py-16 bg-blueGray-200 dark:bg-gray-600 dark:text-white">
             <div className="container px-4 mx-auto">
               <div className="relative flex flex-col w-full min-w-0 mb-6 -mt-64 break-words bg-white rounded-lg shadow-xl">
