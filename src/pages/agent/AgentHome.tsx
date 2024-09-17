@@ -26,6 +26,7 @@ import { UAConfiguration } from "jssip/lib/UA";
 const AgentHome = () => {
   const remoteAudioRef = useRef(null);
   const [isConnected, setIsConnected] = useState(socket.connected)
+  const ringtoneRef = useRef<HTMLAudioElement | null>(null);
   const [webphoneStatus, setWebphoneStatus] = useState(false);
   const [accountStatus, setAccountStatus] = useState(false);
   const [ua, setUa] = useState<UA | null>(null);
@@ -50,6 +51,23 @@ const AgentHome = () => {
     sipUsername: useDecrypt(localStorage.getItem("sipUsername") || ""),
     sipPassword: useDecrypt(localStorage.getItem("password") || ""),
     agentId: localStorage.getItem("id") || ""
+  };
+
+  // Function to play the ringtone when ringing
+  const playRingtone = () => {
+    if (ringtoneRef.current) {
+      ringtoneRef.current.play().catch((error) => {
+        console.error("Failed to play ringtone:", error);
+      });
+    }
+  };
+
+  // Function to stop the ringtone
+  const stopRingtone = () => {
+    if (ringtoneRef.current) {
+      ringtoneRef.current.pause();
+      ringtoneRef.current.currentTime = 0; // Reset to start
+    }
   };
 
   console.log("agent sip name : ", agentAccount.sipUsername)
@@ -122,13 +140,17 @@ const AgentHome = () => {
     ua?.on("newRTCSession", (e) => {
       const session: RTCSession = e?.session;
       setIsRinging(true);
+      playRingtone();
+      // when is rinning is true, I want to play the audio call rintone
       const number = session?.remote_identity?.display_name?.toString()
       setSession(session)
       applySetInvite(number)
       console.log(e.request)
       session.on('confirmed', () => {
+        // when session is confirmed, stop playing audio
         setIsInCall(true);
         setIsRinging(false);
+        stopRingtone()
         const peerConnection = session.connection;
 
         peerConnection.getReceivers().forEach((receiver) => {
@@ -156,6 +178,7 @@ const AgentHome = () => {
         } else {
           console.log("No Data FOund")
         }
+        stopRingtone()
         setIsInCall(false);
         setIsRinging(false);
         setIsCalling(false);
@@ -174,7 +197,7 @@ const AgentHome = () => {
             total_second, data.cause, agentData?.Campaign?.name, session?.direction)
         }
         sendActiveAgent()
-
+        stopRingtone()
         setIsCalling(false);
         setIsInCall(false)
         setIsRinging(false);
@@ -435,7 +458,7 @@ const AgentHome = () => {
               <span id="blackOverlay" className="absolute w-full h-full bg-black opacity-50" />
             </div>
           </section>
-
+          <audio ref={ringtoneRef} controls preload="true" loop src="/public/ringtone.mp3" className="hidden"></audio>
           <section className="relative py-16 bg-blueGray-200 dark:bg-gray-600 dark:text-white">
             <div className="container px-4 mx-auto">
               <div className="relative flex flex-col w-full min-w-0 mb-6 -mt-64 break-words bg-white rounded-lg shadow-xl">
@@ -523,10 +546,10 @@ const AgentHome = () => {
                           <span className={`relative inline-flex rounded-full h-3 w-3 ${webphoneStatus ? "bg-green-600" : "bg-red-600"} `}></span>
                         </span>
                       </div>
-                      <div className="text-center">
+                      {/* <div className="text-center">
                         <span className="opacity-75 ml-3 text-center text-sm">(if this is red it's lying)</span>
 
-                      </div>
+                      </div> */}
                       <div className="ml-3 my-3">
 
                         <div className="flex flex-col">
@@ -584,7 +607,7 @@ const AgentHome = () => {
                           )}
                         </div>
 
-                        <audio ref={audioElement} autoPlay className="hidden" />
+                        <audio ref={audioElement} src="/rintone.mp3" autoPlay className="hidden" />
 
                         {isCalling && <p>Calling...</p>}
 
