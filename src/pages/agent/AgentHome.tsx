@@ -607,7 +607,8 @@ const AgentHome = () => {
                           )}
                         </div>
 
-                        <audio ref={audioElement} src="/rintone.mp3" autoPlay className="hidden" />
+                        <audio ref={audioElement} autoPlay className="hidden" />
+                        {/* <audio ref={audioElement} src="/rintone.mp3" autoPlay className="hidden" /> */}
 
                         {isCalling && <p>Calling...</p>}
 
