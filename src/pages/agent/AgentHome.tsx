@@ -56,6 +56,7 @@ const AgentHome = () => {
   // Function to play the ringtone when ringing
   const playRingtone = () => {
     if (ringtoneRef.current) {
+      ringtoneRef.current.volume = 0.5
       ringtoneRef.current.play().catch((error) => {
         console.error("Failed to play ringtone:", error);
       });
