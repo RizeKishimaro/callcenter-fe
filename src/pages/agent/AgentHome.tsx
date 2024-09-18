@@ -142,7 +142,7 @@ const AgentHome = () => {
     ua?.on("newRTCSession", (e) => {
       const session: RTCSession = e?.session;
       setIsRinging(true);
-      if (!isCalling) playRingtone();
+      if (session.direction === 'incoming') playRingtone();
       // when is rinning is true, I want to play the audio call rintone
       const number = session?.remote_identity?.display_name?.toString()
       setSession(session)

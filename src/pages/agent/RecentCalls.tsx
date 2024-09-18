@@ -15,16 +15,34 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "../../components/ui/too
 const RecentCalls = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [agentId, setAgentId] = useState<number | undefined>(undefined);
   const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0, // Initial page index
-    pageSize: 10, // Default page size
+    pageIndex: 0,
+    pageSize: 10,
   });
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<{
+    agentId: number | undefined,
+    startDate: string,
+    endDate: string,
+    direction: string,
+  }>({
+    agentId: undefined,
     startDate: "",
     endDate: "",
     direction: "",
   });
+
+  useEffect(() => {
+    const storedAgentId = localStorage.getItem("id");
+    if (storedAgentId) {
+      setAgentId(Number(storedAgentId));
+      setFilters((prevFilters) => ({
+        ...prevFilters,
+        agentId: Number(storedAgentId),
+      }));
+    }
+  }, []);
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters((prevFilters) => ({
@@ -32,28 +50,35 @@ const RecentCalls = () => {
       [key]: value,
     }));
   };
-  queryClient.invalidateQueries({ queryKey: "agents" });
+
   const { data: callHistoryData, isError, isSuccess, isLoading, error } = useQuery({
-    queryKey: ['agents', pagination, sorting, filters],
+    queryKey: ["agents", pagination, sorting, filters],
     queryFn: () => getAllCallHistories(pagination.pageIndex, pagination.pageSize, sorting, filters),
+    enabled: !!agentId, // Only enable query when agentId is available
   });
 
   const clearFilters = () => {
     setFilters({
+      agentId: agentId,
       startDate: "",
       endDate: "",
       direction: "",
     });
   };
 
-  const handleErrorToast = useCallback((error: Error) => {
-    const errorMessage = error.response?.data?.message || "Internal Server Error. Please tell your system administrator...";
-    toast({
-      variant: "destructive",
-      title: "Error!",
-      description: `Error: ${errorMessage}`,
-    });
-  }, [toast]);
+  const handleErrorToast = useCallback(
+    (error: Error) => {
+      const errorMessage =
+        error.response?.data?.message ||
+        "Internal Server Error. Please tell your system administrator...";
+      toast({
+        variant: "destructive",
+        title: "Error!",
+        description: `Error: ${errorMessage}`,
+      });
+    },
+    [toast]
+  );
 
   useEffect(() => {
     if (isError && !isLoading && error instanceof AxiosError) {
@@ -61,7 +86,9 @@ const RecentCalls = () => {
     }
   }, [isLoading, isSuccess, isError, error, handleErrorToast]);
 
-  const isAnyFilterApplied = Object.values(filters).some((filter) => filter !== "");
+  const isAnyFilterApplied = Object.entries(filters)
+  .some(([key, value]) => key === "agentId" ? false : value !== "");
+
 
   return (
     <section className='py-10'>
