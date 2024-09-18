@@ -46,6 +46,7 @@ const AgentHome = () => {
   const [isPaused, setIsPaused] = useState(false)
   const [agentData, setAgentData] = useState<any>(null);
   const [prefix, setPrefix] = useState<string>("");
+  const volume = 50 / 100;
 
   const agentAccount = {
     sipUsername: useDecrypt(localStorage.getItem("sipUsername") || ""),
@@ -56,6 +57,7 @@ const AgentHome = () => {
   // Function to play the ringtone when ringing
   const playRingtone = () => {
     if (ringtoneRef.current) {
+      ringtoneRef.current.volume = volume
       ringtoneRef.current.play().catch((error) => {
         console.error("Failed to play ringtone:", error);
       });
