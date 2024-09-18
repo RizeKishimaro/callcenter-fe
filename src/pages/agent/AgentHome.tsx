@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
 import { socket } from "../../providers/socket/socket";
 import { useDecrypt } from "../../store/hooks/useDecrypt";
 import axiosInstance from "../../providers/axiosClient";
@@ -25,7 +26,7 @@ import { UAConfiguration } from "jssip/lib/UA";
 
 const AgentHome = () => {
   const remoteAudioRef = useRef(null);
-  const [isConnected, setIsConnected] = useState(socket.connected)
+  const [isConnected, setIsConnected] = useState(socket.connected);
   const [webphoneStatus, setWebphoneStatus] = useState(false);
   const [accountStatus, setAccountStatus] = useState(false);
   const [ua, setUa] = useState<UA | null>(null);
@@ -40,6 +41,8 @@ const AgentHome = () => {
   const [inviteNumber, setInviteNumber] = useState("");
   const [clientCount, setClientCount] = useState(0)
   const [providerAddress, setProviderAddress] = useState(null);
+  const ringtoneRef = useRef<HTMLAudioElement | null>(null)
+  const [enabledRing, setEnabledRing] = useState(false)
   const audioElement = useRef<HTMLAudioElement | null>(null)
   const [pauseReason, setPauseReason] = useState('')
   const [isPaused, setIsPaused] = useState(false)
@@ -52,8 +55,6 @@ const AgentHome = () => {
     agentId: localStorage.getItem("id") || ""
   };
 
-  console.log("agent sip name : ", agentAccount.sipUsername)
-  console.log("campaign : ", useDecrypt(localStorage.getItem("campaign") || ""))
   const getAgentInfo = async () => {
     const data = await axiosInstance.get(`/agent/${agentAccount.agentId}`);
     setPrefix(data?.data?.Campaign?.prefix)
@@ -78,6 +79,29 @@ const AgentHome = () => {
     });
 
   }
+  const enableRing = (enabled: boolean) => {
+    setEnabledRing(enabled)
+  }
+  const alertRing = () => {
+    console.log("enabledRing", enabledRing)
+    if (ringtoneRef.current && enabledRing) {
+      ringtoneRef.current.src = "./../../../public/ringtone.mp3";
+      // ringtoneRef.current.volume =;
+      if (ringtoneRef.current.paused) {
+        ringtoneRef.current.play()
+      }
+    }
+  }
+  const stopRing = () => {
+    if (ringtoneRef.current && enabledRing && !isInCall) {
+      console.log(!ringtoneRef.current.paused, enableRing)
+      if (!ringtoneRef.current.paused) {
+        ringtoneRef.current.pause();
+        ringtoneRef.current.currentTime = 0;
+      }
+    }
+  }
+
 
   useEffect(() => {
     getAgentInfo()
@@ -85,7 +109,6 @@ const AgentHome = () => {
 
   useEffect(() => {
     if (prefix) {
-      console.log("START connnection with sip : ", prefix)
 
       const wsSocket = new JsSIP.WebSocketInterface(`${import.meta.env.VITE_APP_WEBSOCKET_HOST}:${import.meta.env.VITE_APP_WEBSOCKET_PORT}/ws`)
       const configuration: UAConfiguration = {
@@ -95,7 +118,6 @@ const AgentHome = () => {
         password: agentAccount.sipPassword,
       };
 
-      console.log("After connnection with sip : ", configuration)
 
 
       const userAgent = new JsSIP.UA(configuration);
@@ -124,9 +146,10 @@ const AgentHome = () => {
       setIsRinging(true);
       const number = session?.remote_identity?.display_name?.toString()
       setSession(session)
+      alertRing()
       applySetInvite(number)
-      console.log(e.request)
       session.on('confirmed', () => {
+        stopRing()
         setIsInCall(true);
         setIsRinging(false);
         const peerConnection = session.connection;
@@ -143,32 +166,31 @@ const AgentHome = () => {
         });
 
       });
-
+      // console.log(session.connection.onicecandidateerror, session.connection.onicegatheringstatechange)
+      // console.log(session.connection.iceGatheringState)
       session.on('ended', (data) => {
         if (agentData) {
           const total_second = (new Date(session?.end_time).getTime() - new Date(session?.start_time).getTime()) / 1000
           const hangUpfrom = !data?.message?.from ? agentAccount.agentId : null
-          console.log(agentData)
           sendCallHistory(session?.remote_identity.uri.user,
             session.local_identity.uri.user, hangUpfrom, null, session.start_time, session?.end_time,
             total_second, data.cause, agentData?.Campaign?.name, session?.direction)
-          handlePause(agentAccount.sipUsername, agentData?.Campaign?.name)
-        } else {
-          console.log("No Data FOund")
+          // handlePause(agentAccount.sipUsername, agentData?.Campaign?.name)
         }
+        console.log("executed")
         setIsInCall(false);
         setIsRinging(false);
         setIsCalling(false);
-        setIsPaused(true)
         sendActiveAgent()
-        agentData.outgoing && agentData?.outgoing + 1;
-        console.log("ended")
       });
 
       session.on('failed', (data) => {
+        stopRing()
+        console.log("executed")
         if (agentData) {
           const total_second = isNaN((new Date(session?.end_time).getTime() - new Date(session?.start_time).getTime()) / 1000) && null
           const hangUpfrom = !data?.message?.from ? agentAccount.agentId : null
+          console.log(session?.start_time)
           sendCallHistory(session?.remote_identity.uri.user,
             session.local_identity.uri.user, hangUpfrom, null, session.start_time, session?.end_time,
             total_second, data.cause, agentData?.Campaign?.name, session?.direction)
@@ -214,7 +236,6 @@ const AgentHome = () => {
       setIsConnected(true)
       setWebphoneStatus(true)
     });
-    console.log(agentData)
     socket.emit('exchangeData', {
       userId: agentData?.id,
       displayName: agentData?.name,
@@ -306,33 +327,30 @@ const AgentHome = () => {
 
       })
 
-      callSession?.on('ended', (data) => {
-        const total_second = (new Date(callSession?.end_time).getTime() - new Date(callSession?.start_time).getTime()) / 1000
-        const hangUpfrom = !data?.message?.from ? agentAccount.agentId : null
-        console.log(hangUpfrom);
-        sendActiveAgent()
-        sendCallHistory(callSession?.remote_identity.uri.user,
-          callSession.local_identity.uri.user, hangUpfrom, null, callSession.start_time, callSession?.end_time,
-          total_second, data.cause, agentData.Campaign.name, callSession?.direction)
-        setIsInCall(false);
-        setIsCalling(false);
-        setInviteNumber("");
-        setIsPaused(true)
-        handlePause(agentAccount?.sipUsername, agentData?.Campaign.name);
-        agentData.incoming && agentData?.incoming + 1;
-      });
+      // callSession?.on('ended', (data) => {
+      //   const total_second = (new Date(callSession?.end_time).getTime() - new Date(callSession?.start_time).getTime()) / 1000
+      //   const hangUpfrom = !data?.message?.from ? agentAccount.agentId : null
+      //   sendActiveAgent()
+      //   sendCallHistory(callSession?.remote_identity.uri.user,
+      //     callSession.local_identity.uri.user, hangUpfrom, null, callSession.start_time, callSession?.end_time,
+      //     total_second, data.cause, agentData.Campaign.name, callSession?.direction)
+      //   setIsInCall(false);
+      //   setIsCalling(false);
+      //   setInviteNumber("");
+      //   // handlePause(agentAccount?.sipUsername, agentData?.Campaign.name);
+      // });
 
-      callSession?.on('failed', (data) => {
-        const total_second = (new Date(callSession?.end_time).getTime() - new Date(callSession?.start_time).getTime()) / 1000
-        const hangUpfrom = !data?.message?.from ? agentAccount.agentId : null
-        sendCallHistory(callSession?.remote_identity.uri.user,
-          callSession.local_identity.uri.user, hangUpfrom, null, callSession.start_time, callSession?.end_time,
-          total_second, data.cause, agentData.Campaign.name, callSession?.direction)
-        setIsCalling(false);
-        sendActiveAgent()
+      // callSession?.on('failed', (data) => {
+      //   const total_second = (new Date(callSession?.end_time).getTime() - new Date(callSession?.start_time).getTime()) / 1000
+      //   const hangUpfrom = !data?.message?.from ? agentAccount.agentId : null
+      //   sendCallHistory(callSession?.remote_identity.uri.user,
+      //     callSession.local_identity.uri.user, hangUpfrom, null, callSession.start_time, callSession?.end_time,
+      //     total_second, data.cause, agentData.Campaign.name, callSession?.direction)
+      //   setIsCalling(false);
+      //   sendActiveAgent()
 
-        setInviteNumber("");
-      });
+      //   setInviteNumber("");
+      // });
     }
   };
 
@@ -375,6 +393,7 @@ const AgentHome = () => {
 
   const handleAnswer = () => {
     if (session && isRinging) {
+      stopRing()
       session.answer();
       setIsInCall(true);
       setIsRinging(false);
@@ -423,6 +442,7 @@ const AgentHome = () => {
   return (
     <main className="profile-page dark:bg-gray-600 w-full h-max overflow-y-scroll dark:text-white">
       <audio ref={remoteAudioRef} id="remoteAudio" autoPlay />
+      <audio ref={ringtoneRef} id="ringtoneref" autoPlay />
       <div className="px-6 dark:bg-gray-600 min-h-screen h-max dark:text-white flex rounded-lg">
         <div className="flex flex-col w-full">
           <section className="relative block h-[500px]">
@@ -475,7 +495,7 @@ const AgentHome = () => {
                           <div className="mt-3 w-full flex gap-3 mx-auto justify-center">
                             <p className="mb-1 font-bold flex flex-col text-center ">{agentData?.outgoing || 0} <span className="font-normal">Outbound</span></p>
                             <p className="mb-1 font-bold flex flex-col text-center">{agentData?.incoming || 0}<span className="font-normal">Inbound</span></p>
-                            <p className="mb-1 font-bold flex flex-col text-center">{4.3}<span className="font-normal">Rating</span></p>
+                            <p className="mb-1 font-bold flex flex-col text-center">{agentData?.totalCallTime || 0}<span className="font-normal">Total Call Time</span></p>
                           </div>
                         </div>
                         <div className="mt-10 w-[75%] mx-auto">
@@ -515,6 +535,14 @@ const AgentHome = () => {
                     </div>
                   </div>
                   <div className="md:w-2/4 w-full h-full my-auto p-4 flex flex-col">
+                    <div className="border-2 rounded-lg p-3 mb-3 text-center justify-center">
+                      <div>
+                        <p>Enable Ringtone</p>
+                      </div>
+                      <div>
+                        <Switch onCheckedChange={(e: boolean) => { enableRing(e) }} />
+                      </div>
+                    </div>
                     <div className="border-2 rounded-lg p-3 mb-3">
                       <div className=" text-center flex items-center justify-center">
                         <p className="text-xl font-medium">WebPhone</p>
@@ -586,7 +614,7 @@ const AgentHome = () => {
 
                         <audio ref={audioElement} autoPlay className="hidden" />
 
-                        {isCalling && <p>Calling...</p>}
+                        {isCalling && !isInCall && <p>Calling...</p>}
 
                         <div className="flex justify-center items-center">
                           {!isCalling && !isRinging && !isInCall && (
@@ -652,7 +680,7 @@ const AgentHome = () => {
                               }} />
                           </div>
                           <div className="text-center" >
-                            <Button onClick={() => {
+                            <Button disabled={!pauseReason} onClick={() => {
                               handlePause(agentAccount?.sipUsername, agentData?.Campaign.name)
                             }} variant={"secondary"}>Pause</Button>
                           </div>
