@@ -32,9 +32,9 @@ const RecentCalls = () => {
       [key]: value,
     }));
   };
-  queryClient.invalidateQueries({ queryKey: "agents" });
+  queryClient.invalidateQueries({ queryKey: ["agents"] });
   const { data: callHistoryData, isError, isSuccess, isLoading, error } = useQuery({
-    queryKey: ['agents', pagination, sorting, filters],
+    queryKey: ['callhistory', pagination, sorting, filters],
     queryFn: () => getAllCallHistories(pagination.pageIndex, pagination.pageSize, sorting, filters),
   });
 

@@ -67,7 +67,7 @@ const CallHistory = () => {
     isLoading,
     error,
   } = usePaginatedQuery({
-    queryKey: "agents",
+    queryKey: "callhistory",
     queryFn: (pageIndex, pageSize, sorting, filters) =>
       getAllCallHistories(pageIndex, pageSize, sorting, filters),
     pagination,

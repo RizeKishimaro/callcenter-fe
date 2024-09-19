@@ -23,6 +23,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { Button } from "../../components/ui/button";
 import SecondCounter from "./SecondCounter";
 import { UAConfiguration } from "jssip/lib/UA";
+import { useQueryClient } from "@tanstack/react-query";
 
 const AgentHome = () => {
   const remoteAudioRef = useRef(null);
@@ -54,6 +55,7 @@ const AgentHome = () => {
     sipPassword: useDecrypt(localStorage.getItem("password") || ""),
     agentId: localStorage.getItem("id") || ""
   };
+  const queryClient = useQueryClient();
 
   const getAgentInfo = async () => {
     const data = await axiosInstance.get(`/agent/${agentAccount.agentId}`);
@@ -61,8 +63,6 @@ const AgentHome = () => {
     console.log(data.data.Campaign.prefix)
     setAgentData(data.data);
     setProviderAddress(data?.data?.Campaign?.SipProvider?.host)
-
-
     return data
   };
   const sendInactiveAgent = () => {
@@ -169,6 +169,7 @@ const AgentHome = () => {
       // console.log(session.connection.onicecandidateerror, session.connection.onicegatheringstatechange)
       // console.log(session.connection.iceGatheringState)
       session.on('ended', (data) => {
+        queryClient.invalidateQueries({ queryKey: ["callhistory"] })
         if (agentData) {
           const total_second = (new Date(session?.end_time).getTime() - new Date(session?.start_time).getTime()) / 1000
           const hangUpfrom = !data?.message?.from ? agentAccount.agentId : null
@@ -186,11 +187,10 @@ const AgentHome = () => {
 
       session.on('failed', (data) => {
         stopRing()
-        console.log("executed")
         if (agentData) {
+          queryClient.invalidateQueries({ queryKey: ["callhistory"] })
           const total_second = isNaN((new Date(session?.end_time).getTime() - new Date(session?.start_time).getTime()) / 1000) && null
           const hangUpfrom = !data?.message?.from ? agentAccount.agentId : null
-          console.log(session?.start_time)
           sendCallHistory(session?.remote_identity.uri.user,
             session.local_identity.uri.user, hangUpfrom, null, session.start_time, session?.end_time,
             total_second, data.cause, agentData?.Campaign?.name, session?.direction)
