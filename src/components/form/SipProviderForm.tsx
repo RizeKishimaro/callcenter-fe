@@ -9,7 +9,7 @@ import { Input } from '../ui/input'
 import { MultiSelect } from '../multi-select'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '../ui/select'
 import { Button } from '../ui/button'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { SipProviderType } from '../../providers/types/sipProviderType'
 import { createSetupSipProvider, createSipProvider } from '../../service/sip/sipProviderService'
 import { createCampaign } from '../../service/sip/campaignService'
@@ -22,6 +22,7 @@ const SipProviderForm = () => {
   const { toast } = useToast();
   const navigate = useNavigate()
   const currentUrl = window.location.href;
+  const queryClient = useQueryClient();
   const startegyLists: string[] = ["rrmemory", "ringall", "fewestcalls", "random", "lastrecent", "rrordered"];
 
 
@@ -32,6 +33,7 @@ const SipProviderForm = () => {
       createSetupSipProvider(body);
     },
     onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['sipProviders'] })
       if (currentUrl.includes('/dashboard/manage/admin/campaign/create')) {
         navigate('/dashboard/manage/admin/campaign');
       }

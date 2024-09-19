@@ -60,4 +60,4 @@ const Agents = () => {
   );
 };
 
-export default memo(Agents);
+export default Agents;

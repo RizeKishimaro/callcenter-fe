@@ -62,4 +62,4 @@ const Campaigns = () => {
   );
 };
 
-export default memo(Campaigns);
+export default Campaigns;

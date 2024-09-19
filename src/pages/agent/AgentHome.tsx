@@ -27,7 +27,8 @@ import { useQueryClient } from "@tanstack/react-query";
 
 const AgentHome = () => {
   const remoteAudioRef = useRef(null);
-  const [isConnected, setIsConnected] = useState(socket.connected);
+
+  const [isConnected, setIsConnected] = useState(socket.connected)
   const [webphoneStatus, setWebphoneStatus] = useState(false);
   const [accountStatus, setAccountStatus] = useState(false);
   const [ua, setUa] = useState<UA | null>(null);
@@ -43,12 +44,12 @@ const AgentHome = () => {
   const [clientCount, setClientCount] = useState(0)
   const [providerAddress, setProviderAddress] = useState(null);
   const ringtoneRef = useRef<HTMLAudioElement | null>(null)
-  const [enabledRing, setEnabledRing] = useState(false)
   const audioElement = useRef<HTMLAudioElement | null>(null)
   const [pauseReason, setPauseReason] = useState('')
   const [isPaused, setIsPaused] = useState(false)
   const [agentData, setAgentData] = useState<any>(null);
   const [prefix, setPrefix] = useState<string>("");
+  const volume = 50 / 100;
 
   const agentAccount = {
     sipUsername: useDecrypt(localStorage.getItem("sipUsername") || ""),
@@ -56,6 +57,24 @@ const AgentHome = () => {
     agentId: localStorage.getItem("id") || ""
   };
   const queryClient = useQueryClient();
+
+  // Function to play the ringtone when ringing
+  const playRingtone = () => {
+    if (ringtoneRef.current) {
+      ringtoneRef.current.volume = volume
+      ringtoneRef.current.play().catch((error) => {
+        console.error("Failed to play ringtone:", error);
+      });
+    }
+  };
+
+  // Function to stop the ringtone
+  const stopRingtone = () => {
+    if (ringtoneRef.current) {
+      ringtoneRef.current.pause();
+      ringtoneRef.current.currentTime = 0; // Reset to start
+    }
+  };
 
   const getAgentInfo = async () => {
     const data = await axiosInstance.get(`/agent/${agentAccount.agentId}`);
@@ -79,28 +98,8 @@ const AgentHome = () => {
     });
 
   }
-  const enableRing = (enabled: boolean) => {
-    setEnabledRing(enabled)
-  }
-  const alertRing = () => {
-    console.log("enabledRing", enabledRing)
-    if (ringtoneRef.current && enabledRing) {
-      ringtoneRef.current.src = "./../../../public/ringtone.mp3";
-      // ringtoneRef.current.volume =;
-      if (ringtoneRef.current.paused) {
-        ringtoneRef.current.play()
-      }
-    }
-  }
-  const stopRing = () => {
-    if (ringtoneRef.current && enabledRing && !isInCall) {
-      console.log(!ringtoneRef.current.paused, enableRing)
-      if (!ringtoneRef.current.paused) {
-        ringtoneRef.current.pause();
-        ringtoneRef.current.currentTime = 0;
-      }
-    }
-  }
+
+
 
 
   useEffect(() => {
@@ -144,14 +143,16 @@ const AgentHome = () => {
     ua?.on("newRTCSession", (e) => {
       const session: RTCSession = e?.session;
       setIsRinging(true);
+      if (session.direction === 'incoming') playRingtone();
+      // when is rinning is true, I want to play the audio call rintone
       const number = session?.remote_identity?.display_name?.toString()
       setSession(session)
-      alertRing()
       applySetInvite(number)
       session.on('confirmed', () => {
-        stopRing()
+        // when session is confirmed, stop playing audio
         setIsInCall(true);
         setIsRinging(false);
+        stopRingtone()
         const peerConnection = session.connection;
 
         peerConnection.getReceivers().forEach((receiver) => {
@@ -170,7 +171,8 @@ const AgentHome = () => {
       // console.log(session.connection.iceGatheringState)
       session.on('ended', (data) => {
         queryClient.invalidateQueries({ queryKey: ["callhistory"] })
-        if (agentData) {
+        if (agentData && !isInCall) {
+          console.log("called")
           const total_second = (new Date(session?.end_time).getTime() - new Date(session?.start_time).getTime()) / 1000
           const hangUpfrom = !data?.message?.from ? agentAccount.agentId : null
           sendCallHistory(session?.remote_identity.uri.user,
@@ -178,7 +180,6 @@ const AgentHome = () => {
             total_second, data.cause, agentData?.Campaign?.name, session?.direction)
           // handlePause(agentAccount.sipUsername, agentData?.Campaign?.name)
         }
-        console.log("executed")
         setIsInCall(false);
         setIsRinging(false);
         setIsCalling(false);
@@ -186,7 +187,6 @@ const AgentHome = () => {
       });
 
       session.on('failed', (data) => {
-        stopRing()
         if (agentData) {
           queryClient.invalidateQueries({ queryKey: ["callhistory"] })
           const total_second = isNaN((new Date(session?.end_time).getTime() - new Date(session?.start_time).getTime()) / 1000) && null
@@ -196,7 +196,7 @@ const AgentHome = () => {
             total_second, data.cause, agentData?.Campaign?.name, session?.direction)
         }
         sendActiveAgent()
-
+        stopRingtone()
         setIsCalling(false);
         setIsInCall(false)
         setIsRinging(false);
@@ -393,7 +393,6 @@ const AgentHome = () => {
 
   const handleAnswer = () => {
     if (session && isRinging) {
-      stopRing()
       session.answer();
       setIsInCall(true);
       setIsRinging(false);
@@ -455,7 +454,7 @@ const AgentHome = () => {
               <span id="blackOverlay" className="absolute w-full h-full bg-black opacity-50" />
             </div>
           </section>
-
+          <audio ref={ringtoneRef} controls preload="true" loop src="/ringtone.mp3" className="hidden"></audio>
           <section className="relative py-16 bg-blueGray-200 dark:bg-gray-600 dark:text-white">
             <div className="container px-4 mx-auto">
               <div className="relative flex flex-col w-full min-w-0 mb-6 -mt-64 break-words bg-white rounded-lg shadow-xl">
@@ -535,14 +534,6 @@ const AgentHome = () => {
                     </div>
                   </div>
                   <div className="md:w-2/4 w-full h-full my-auto p-4 flex flex-col">
-                    <div className="border-2 rounded-lg p-3 mb-3 text-center justify-center">
-                      <div>
-                        <p>Enable Ringtone</p>
-                      </div>
-                      <div>
-                        <Switch onCheckedChange={(e: boolean) => { enableRing(e) }} />
-                      </div>
-                    </div>
                     <div className="border-2 rounded-lg p-3 mb-3">
                       <div className=" text-center flex items-center justify-center">
                         <p className="text-xl font-medium">WebPhone</p>
@@ -551,10 +542,10 @@ const AgentHome = () => {
                           <span className={`relative inline-flex rounded-full h-3 w-3 ${webphoneStatus ? "bg-green-600" : "bg-red-600"} `}></span>
                         </span>
                       </div>
-                      <div className="text-center">
+                      {/* <div className="text-center">
                         <span className="opacity-75 ml-3 text-center text-sm">(if this is red it's lying)</span>
 
-                      </div>
+                      </div> */}
                       <div className="ml-3 my-3">
 
                         <div className="flex flex-col">
@@ -613,6 +604,7 @@ const AgentHome = () => {
                         </div>
 
                         <audio ref={audioElement} autoPlay className="hidden" />
+                        {/* <audio ref={audioElement} src="/rintone.mp3" autoPlay className="hidden" /> */}
 
                         {isCalling && !isInCall && <p>Calling...</p>}
 
