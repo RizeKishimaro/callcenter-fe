@@ -50,9 +50,10 @@ const RecentCalls = () => {
       [key]: value,
     }));
   };
-
+  // queryClient.invalidateQueries({ queryKey: ["callhistory"] });
   const { data: callHistoryData, isError, isSuccess, isLoading, error } = useQuery({
-    queryKey: ["agents", pagination, sorting, filters],
+    queryKey: ['callhistory', pagination, sorting, filters],
+
     queryFn: () => getAllCallHistories(pagination.pageIndex, pagination.pageSize, sorting, filters),
     enabled: !!agentId, // Only enable query when agentId is available
   });
@@ -87,7 +88,7 @@ const RecentCalls = () => {
   }, [isLoading, isSuccess, isError, error, handleErrorToast]);
 
   const isAnyFilterApplied = Object.entries(filters)
-  .some(([key, value]) => key === "agentId" ? false : value !== "");
+    .some(([key, value]) => key === "agentId" ? false : value !== "");
 
 
   return (
