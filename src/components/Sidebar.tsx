@@ -46,7 +46,7 @@ const roleBasedAccess = {
     // { title: 'Log', label: '', icon: FileClock, variant: 'ghost', href: '/dashboard/manage/log' },
     { title: 'Call History', label: '', icon: History, variant: 'ghost', href: '/dashboard/manage/call-history' },
     // { title: 'Recording', label: '', icon: CassetteTape, variant: 'ghost', href: '/dashboard/manage/recording' },
-    { title: 'User', label: '', icon: UserCheck, variant: 'ghost', href: '/dashboard/manage/user' },
+    // { title: 'User', label: '', icon: UserCheck, variant: 'ghost', href: '/dashboard/manage/user' },
   ],
   agent: [
     { title: 'Call History', label: '', icon: History, variant: 'ghost', href: '/dashboard/agent/recentcalls' },
