@@ -24,6 +24,7 @@ import { Button } from "../../components/ui/button";
 import SecondCounter from "./SecondCounter";
 import { UAConfiguration } from "jssip/lib/UA";
 import { useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "react-router-dom";
 
 const AgentHome = () => {
   const remoteAudioRef = useRef(null);
@@ -56,6 +57,7 @@ const AgentHome = () => {
     sipPassword: useDecrypt(localStorage.getItem("password") || ""),
     agentId: localStorage.getItem("id") || ""
   };
+  const location = useLocation()
   const queryClient = useQueryClient();
 
   // Function to play the ringtone when ringing
@@ -103,8 +105,27 @@ const AgentHome = () => {
 
 
   useEffect(() => {
+    const handleBeforeUnload = (event) => {
+      socket.emit('disconnectAgent');      // Optionally, you can set a message on the event to alert the user (optional)
+      event.preventDefault();
+      event.returnValue = '';
+    };
+
+    // Listen for window close or tab close
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    const handleRouteChange = () => {
+      socket.emit('disconnectAgent');
+      socket.disconnect();
+    };
+
+    // Listen for route changes
+    // Clean up the event listener when the component is unmounted
     getAgentInfo()
   }, [])
+  useEffect(() => {
+    console.log(location)
+    socket.emit("disconnectAgent")
+  }, [location])
 
   useEffect(() => {
     if (prefix) {

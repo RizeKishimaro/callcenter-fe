@@ -10,6 +10,7 @@ const ActiveQueue = ({ sockets, spyAgent, stopSpy }: { sockets: any, spyAgent: a
   const containerWidth = 400; // Define the width of the container
   const containerHeight = 400; // Define the height of the container
   const iconSize = 64; // Size of the icons (h-16 w-16 in Tailwind CSS is 64px)
+  console.log(sockets)
 
   // State to store agents' positions
   const [agentPositions, setAgentPositions] = useState<{ [key: string]: { top: string, left: string } }>({});
