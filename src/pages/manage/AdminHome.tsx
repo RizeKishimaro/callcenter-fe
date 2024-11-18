@@ -91,7 +91,6 @@ const AdminHome = () => {
     ua.on('newRTCSession', (e) => {
       const session: RTCSession = e.session;
       setSession(session);
-
       if (session.direction === 'incoming') {
         console.log('Incoming call detected');
 

@@ -13,7 +13,6 @@ import Agents from './pages/manage/agent/Agents'
 import CreateAgent from './pages/manage/agent/CreateAgent'
 import User from './pages/manage/user/User'
 import Campaigns from './pages/manage/campaign/Campaign'
-import CreateCampaign from './pages/manage/campaign/CreateCampaign'
 import SipProviders from './pages/manage/sip-provider/SipProvider'
 import CreateSipProvider from './pages/manage/sip-provider/CreateSipProvider'
 import AudioStore from './pages/manage/audio-store/AudioStore'
@@ -22,7 +21,6 @@ import CreateUser from './pages/manage/user/CreateUser'
 import CallHistories from './pages/manage/call-history/CallHistory'
 import { useSelector } from 'react-redux'
 import AdminHome from './pages/manage/AdminHome'
-import SipProviderForm from './components/form/SipProviderForm'
 
 function App() {
   const navigate = useNavigate();

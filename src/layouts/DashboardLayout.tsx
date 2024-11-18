@@ -89,7 +89,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userRole }) => {
     return () => window.removeEventListener('resize', handleWindowResize);
   }, [isCollapsed]);
 
-  console.log("the user role : ", userRole)
 
   useEffect(() => {
     if (!userRole) return navigate('/sign-in', { replace: true })

@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: #231942;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
@@ -63,6 +63,7 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -70,18 +71,23 @@
 
 /* Custom scrollbar for webkit browsers (Chrome, Safari) */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 2px; /* Width of the scrollbar */
+  width: 2px;
+  /* Width of the scrollbar */
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: #f1f1f1; /* Background color of the track */
+  background: #f1f1f1;
+  /* Background color of the track */
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #888; /* Color of the scrollbar thumb */
-  border-radius: 8px; /* Rounded corners for the thumb */
+  background: #888;
+  /* Color of the scrollbar thumb */
+  border-radius: 8px;
+  /* Rounded corners for the thumb */
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #555; /* Color of the scrollbar thumb on hover */
+  background: #555;
+  /* Color of the scrollbar thumb on hover */
 }

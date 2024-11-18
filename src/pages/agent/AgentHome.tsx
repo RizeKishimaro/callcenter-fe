@@ -1,8 +1,8 @@
 
 import { useRef, useState, useEffect, useMemo } from "react";
-import JsSIP, { UA } from "jssip";
+import JsSIP, { NameAddrHeader, UA } from "jssip";
 import { RTCSession } from "jssip/lib/RTCSession";
-import { Clock, Hand, MicOff, PhoneCall, PhoneForwarded, PhoneIcon, PhoneIncoming, PhoneOff, PhoneOffIcon } from "lucide-react";
+import { Clock, Hand, MicOff, PhoneCall, PhoneForwarded, PhoneIcon, PhoneIncoming, PhoneOff, PhoneOffIcon, Server } from "lucide-react";
 import {
   Input,
 } from "../../components/ui/input";
@@ -15,7 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
 import { socket } from "../../providers/socket/socket";
 import { useDecrypt } from "../../store/hooks/useDecrypt";
 import axiosInstance from "../../providers/axiosClient";
@@ -25,17 +24,18 @@ import SecondCounter from "./SecondCounter";
 import { UAConfiguration } from "jssip/lib/UA";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "react-router-dom";
+import { WebPhoneComponent } from "../../components/web-phone";
 
 const AgentHome = () => {
   const remoteAudioRef = useRef(null);
 
-  const [isConnected, setIsConnected] = useState(socket.connected)
   const [webphoneStatus, setWebphoneStatus] = useState(false);
   const [accountStatus, setAccountStatus] = useState(false);
   const [ua, setUa] = useState<UA | null>(null);
   const [session, setSession] = useState<RTCSession | null>(null);
   const [isCalling, setIsCalling] = useState(false);
   const [isInCall, setIsInCall] = useState(false);
+  const [service, setService] = useState(false);
   const [isMuted, setIsMuted] = useState(false)
   const [isHold, setIsHold] = useState(false);
   const [isRinging, setIsRinging] = useState(false);
@@ -81,20 +81,17 @@ const AgentHome = () => {
   const getAgentInfo = async () => {
     const data = await axiosInstance.get(`/agent/${agentAccount.agentId}`);
     setPrefix(data?.data?.Campaign?.prefix)
-    console.log(data.data.Campaign.prefix)
     setAgentData(data.data);
     setProviderAddress(data?.data?.Campaign?.SipProvider?.host)
     return data
   };
   const sendInactiveAgent = () => {
-    setIsConnected(false);
     socket.emit("incall", {
       isActive: isInCall
     });
 
   }
   const sendActiveAgent = () => {
-    setIsConnected(true);
     socket.emit("idle", {
       isActive: isInCall
     });
@@ -123,7 +120,6 @@ const AgentHome = () => {
     getAgentInfo()
   }, [])
   useEffect(() => {
-    console.log(location)
     socket.emit("disconnectAgent")
   }, [location])
 
@@ -163,18 +159,38 @@ const AgentHome = () => {
     }
     ua?.on("newRTCSession", (e) => {
       const session: RTCSession = e?.session;
-      setIsRinging(true);
+
+      setIsRinging((prevState) => true);
       if (session.direction === 'incoming') playRingtone();
+
+
       // when is rinning is true, I want to play the audio call rintone
       const number = session?.remote_identity?.display_name?.toString()
+
+      const serviceName = session ? e?.request?.headers?.['X-Service-From']?.[0]?.raw : "Unknown";
+      setService(serviceName);
       setSession(session)
       applySetInvite(number)
+      const peerConnection = session.connection;
+
+      session?.on("progress", () => {
+        peerConnection?.getReceivers().forEach((receiver) => {
+          if (receiver.track.kind === 'audio') {
+            if (audioElement.current) {
+              const remoteStream = new MediaStream();
+              remoteStream.addTrack(receiver.track);
+              audioElement.current.srcObject = remoteStream;
+              audioElement.current.play();
+            }
+          }
+        });
+      });
+
       session.on('confirmed', () => {
         // when session is confirmed, stop playing audio
         setIsInCall(true);
         setIsRinging(false);
         stopRingtone()
-        const peerConnection = session.connection;
 
         peerConnection.getReceivers().forEach((receiver) => {
           if (receiver.track.kind === 'audio') {
@@ -188,12 +204,11 @@ const AgentHome = () => {
         });
 
       });
-      // console.log(session.connection.onicecandidateerror, session.connection.onicegatheringstatechange)
-      // console.log(session.connection.iceGatheringState)
+
+
       session.on('ended', (data) => {
         queryClient.invalidateQueries({ queryKey: ["callhistory"] })
         if (agentData && !isInCall) {
-          console.log("called")
           const total_second = (new Date(session?.end_time).getTime() - new Date(session?.start_time).getTime()) / 1000
           const hangUpfrom = !data?.message?.from ? agentAccount.agentId : null
           sendCallHistory(session?.remote_identity.uri.user,
@@ -245,6 +260,11 @@ const AgentHome = () => {
 
 
     return () => {
+      ua?.off("newRTCSession", () => { });
+      ua?.off("connected", () => { });
+      ua?.off("disconnected", () => { });
+      ua?.off("registered", () => { });
+      ua?.off("unregistered", () => { });
     };
   }, [ua]);
   useEffect(() => {
@@ -254,7 +274,6 @@ const AgentHome = () => {
   }, [isInCall])
   useEffect(() => {
     socket.on('connect', () => {
-      setIsConnected(true)
       setWebphoneStatus(true)
     });
     socket.emit('exchangeData', {
@@ -277,12 +296,17 @@ const AgentHome = () => {
       setClientCount(roomCounts)
     });
     socket.emit('getAgentData', (response) => {
-      console.log('Agent data:', response);
     });
     if (isInCall) {
       sendInactiveAgent()
     }
-
+    return () => {
+      socket.off("joinRoom")
+      socket.off("exchangeData")
+      socket.off("exchangeComplete")
+      socket.off("clientCount")
+      socket.off("connect")
+    }
   }, [agentData?.id]);
 
   const sendCallHistory = (remote_num, local_num, hangUpfrom?: any, transferFrom?: any,
@@ -304,84 +328,79 @@ const AgentHome = () => {
     })
 
   }
-  const handleCall = () => {
-    if (ua && !isCalling || !isInCall) {
-      setIsCalling(true);
-      setInviteNumber(phoneNumber)
-      const options = {
-        mediaConstraints: { audio: true, video: false },
-        sessionDescriptionHandlerOptions: {
-          constraints: { audio: true, video: false },
-        },
-      };
+  // const handleCall = () => {
+  //   if (ua && !isCalling || !isInCall) {
+  //     setIsCalling(true);
+  //     setInviteNumber(phoneNumber)
+  //     const options = {
+  //       mediaConstraints: { audio: true, video: false },
+  //       sessionDescriptionHandlerOptions: {
+  //         constraints: { audio: true, video: false },
+  //       },
+  //     };
 
-      const destination = `sip:${phoneNumber}@${providerAddress}`;
-      const callSession = ua?.call(destination, options);
-      const peerConnection = callSession?.connection;
+  //     const destination = `sip:${phoneNumber}@${providerAddress}`;
+  //     const callSession = ua?.call(destination, options);
+  //     const peerConnection = callSession?.connection;
 
-      callSession?.on("progress", () => {
-        peerConnection?.getReceivers().forEach((receiver) => {
-          if (receiver.track.kind === 'audio') {
-            if (audioElement.current) {
-              const remoteStream = new MediaStream();
-              remoteStream.addTrack(receiver.track);
-              audioElement.current.srcObject = remoteStream;
-              audioElement.current.play();
-            }
-          }
-        });
-      });
-      callSession?.on("accepted", () => {
-        setIsInCall(true)
-        const peerConnection = callSession?.connection;
+  //     callSession?.on("progress", () => {
+  //       peerConnection?.getReceivers().forEach((receiver) => {
+  //         if (receiver.track.kind === 'audio') {
+  //           if (audioElement.current) {
+  //             const remoteStream = new MediaStream();
+  //             remoteStream.addTrack(receiver.track);
+  //             audioElement.current.srcObject = remoteStream;
+  //             audioElement.current.play();
+  //           }
+  //         }
+  //       });
+  //     });
+  //     callSession?.on("accepted", () => {
+  //       setIsInCall(true)
+  //       const peerConnection = callSession?.connection;
+  //       console.log(peerConnection.getReceivers())
 
-        peerConnection.getReceivers().forEach((receiver) => {
-          if (receiver.track.kind === 'audio') {
-            if (audioElement.current) {
-              const remoteStream = new MediaStream();
-              remoteStream.addTrack(receiver.track);
-              audioElement.current.srcObject = remoteStream;
-              audioElement.current.play();
-            }
-          }
-        });
+  //       peerConnection.getReceivers().forEach((receiver) => {
+  //         if (receiver.track.kind === 'audio') {
+  //           if (audioElement.current) {
+  //             const remoteStream = new MediaStream();
+  //             remoteStream.addTrack(receiver.track);
+  //             audioElement.current.srcObject = remoteStream;
+  //             audioElement.current.play();
+  //           }
+  //         }
+  //       });
 
-      })
+  //     })
 
-      // callSession?.on('ended', (data) => {
-      //   const total_second = (new Date(callSession?.end_time).getTime() - new Date(callSession?.start_time).getTime()) / 1000
-      //   const hangUpfrom = !data?.message?.from ? agentAccount.agentId : null
-      //   sendActiveAgent()
-      //   sendCallHistory(callSession?.remote_identity.uri.user,
-      //     callSession.local_identity.uri.user, hangUpfrom, null, callSession.start_time, callSession?.end_time,
-      //     total_second, data.cause, agentData.Campaign.name, callSession?.direction)
-      //   setIsInCall(false);
-      //   setIsCalling(false);
-      //   setInviteNumber("");
-      //   // handlePause(agentAccount?.sipUsername, agentData?.Campaign.name);
-      // });
+  // callSession?.on('ended', (data) => {
+  //   const total_second = (new Date(callSession?.end_time).getTime() - new Date(callSession?.start_time).getTime()) / 1000
+  //   const hangUpfrom = !data?.message?.from ? agentAccount.agentId : null
+  //   sendActiveAgent()
+  //   sendCallHistory(callSession?.remote_identity.uri.user,
+  //     callSession.local_identity.uri.user, hangUpfrom, null, callSession.start_time, callSession?.end_time,
+  //     total_second, data.cause, agentData.Campaign.name, callSession?.direction)
+  //   setIsInCall(false);
+  //   setIsCalling(false);
+  //   setInviteNumber("");
+  //   // handlePause(agentAccount?.sipUsername, agentData?.Campaign.name);
+  // });
 
-      // callSession?.on('failed', (data) => {
-      //   const total_second = (new Date(callSession?.end_time).getTime() - new Date(callSession?.start_time).getTime()) / 1000
-      //   const hangUpfrom = !data?.message?.from ? agentAccount.agentId : null
-      //   sendCallHistory(callSession?.remote_identity.uri.user,
-      //     callSession.local_identity.uri.user, hangUpfrom, null, callSession.start_time, callSession?.end_time,
-      //     total_second, data.cause, agentData.Campaign.name, callSession?.direction)
-      //   setIsCalling(false);
-      //   sendActiveAgent()
+  // callSession?.on('failed', (data) => {
+  //   const total_second = (new Date(callSession?.end_time).getTime() - new Date(callSession?.start_time).getTime()) / 1000
+  //   const hangUpfrom = !data?.message?.from ? agentAccount.agentId : null
+  //   sendCallHistory(callSession?.remote_identity.uri.user,
+  //     callSession.local_identity.uri.user, hangUpfrom, null, callSession.start_time, callSession?.end_time,
+  //     total_second, data.cause, agentData.Campaign.name, callSession?.direction)
+  //   setIsCalling(false);
+  //   sendActiveAgent()
 
-      //   setInviteNumber("");
-      // });
-    }
-  };
+  //   setInviteNumber("");
+  // });
+  // }
+  //   };
 
-  const handleHangup = () => {
-    if (session) {
-      session.terminate();
-      setIsInCall(false);
-      setIsRinging(false);
-    }
-  };
+
   const handlePause = async (agt_number, campaign_name) => {
     console.log(agt_number, campaign_name)
     const { status } = await axiosInstance.post(`/agent/pause`, {
@@ -399,34 +418,7 @@ const AgentHome = () => {
     console.log("paused")
     return 1;
   }
-  const muteCall = () => {
-    if (session) {
-      session.mute();
-      setIsMuted(true);
-    }
-  }
-  const unmuteCall = () => {
-    if (session) {
-      session.unmute();
-      setIsMuted(false)
-    }
-  }
 
-  const handleAnswer = () => {
-    if (session && isRinging) {
-      session.answer();
-      setIsInCall(true);
-      setIsRinging(false);
-    }
-  };
-
-  const transferCall = () => {
-    if (session && dialpadNumber) {
-      setDialpadNumber('')
-      const target = `sip:${dialpadNumber}@${providerAddress}`;
-      session.refer(target);
-    }
-  };
 
   const handleResume = async () => {
     const { status } = await axiosInstance.post(`/agent/resume`, {
@@ -438,25 +430,6 @@ const AgentHome = () => {
     localStorage.setItem("paused", "false");
     return 1;
   }
-  const sendDTMF = (value: string) => {
-    if (session && isInCall) {
-      session.sendDTMF(value);
-    }
-  };
-  const holdCall = () => {
-    if (session) {
-      session.hold();
-      setIsHold(true);
-
-    }
-  }
-  const unHoldCall = () => {
-    if (session) {
-      session.unhold();
-      setIsHold(false);
-    }
-  }
-
 
 
   return (
@@ -555,133 +528,144 @@ const AgentHome = () => {
                     </div>
                   </div>
                   <div className="md:w-2/4 w-full h-full my-auto p-4 flex flex-col">
-                    <div className="border-2 rounded-lg p-3 mb-3">
-                      <div className=" text-center flex items-center justify-center">
-                        <p className="text-xl font-medium">WebPhone</p>
-                        <span className="relative flex h-3 w-3 ml-3">
-                          <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${webphoneStatus ? "bg-green-400" : "bg-red-400"} opacity-75`}></span>
-                          <span className={`relative inline-flex rounded-full h-3 w-3 ${webphoneStatus ? "bg-green-600" : "bg-red-600"} `}></span>
-                        </span>
-                      </div>
-                      {/* <div className="text-center">
+
+                    <WebPhoneComponent ua={ua} agentData={agentData} providerAddress={providerAddress} />
+                    {/* <div className="border-2 rounded-lg p-3 mb-3"> */}
+                    {/* <div className=" text-center flex items-center justify-center"> */}
+                    {/*   <p className="text-xl font-medium">WebPhone</p> */}
+                    {/*   <span className="relative flex h-3 w-3 ml-3"> */}
+                    {/*     <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${webphoneStatus ? "bg-green-400" : "bg-red-400"} opacity-75`}></span> */}
+                    {/*     <span className={`relative inline-flex rounded-full h-3 w-3 ${webphoneStatus ? "bg-green-600" : "bg-red-600"} `}></span> */}
+                    {/*   </span> */}
+                    {/* </div> */}
+                    {/* <div className="text-center">
                         <span className="opacity-75 ml-3 text-center text-sm">(if this is red it's lying)</span>
 
                       </div> */}
-                      <div className="ml-3 my-3">
+                    {/* <div className="ml-3 my-3"> */}
 
-                        <div className="flex flex-col">
-                          {isRinging && (
-                            <p className="flex mb-3">
-                              <PhoneIcon className="mr-2" />
-                              <span>{inviteNumber ? inviteNumber : "unknown"}</span>
-                            </p>
-                          )}
-                          {isInCall && (
-                            <p className="flex mb-3">
-                              <PhoneIcon className="mr-2" />
-                              <span>{inviteNumber ? inviteNumber : "unknown"}</span>
-                            </p>
-                          )}
+                    {/* <div className="flex flex-col"> */}
+                    {/*   {isRinging && ( */}
+                    {/*     <p className="flex mb-3"> */}
+                    {/*       <PhoneIcon className="mr-2" /> */}
+                    {/*       <span>{inviteNumber ? inviteNumber : "Unknown"}</span> */}
+                    {/*     </p> */}
+                    {/*   )} */}
+                    {/*   {isInCall && ( */}
+                    {/*     <p className="flex mb-3"> */}
+                    {/*       <PhoneIcon className="mr-2" /> */}
+                    {/*       <span>{inviteNumber ? inviteNumber : "Unknown"}</span> */}
+                    {/*     </p> */}
+                    {/*   )} */}
+                    {/*   {isRinging && ( */}
+                    {/*     <p className="flex mb-3"> */}
+                    {/*       <Server className="mr-2" /> */}
+                    {/*       <span>{service ? service : "Unknown Service"}</span> */}
+                    {/*     </p> */}
+                    {/*   )} */}
 
-                          {!isRinging && isInCall && (
-                            <>
+                    {/*   {!isRinging && isInCall && ( */}
+                    {/*     <> */}
+                    {/*       <div className="flex mb-3"> */}
+                    {/*         <Clock className="mr-2" /> */}
+                    {/*         <SecondCounter /> */}
+                    {/*       </div> */}
+                    {/*       <p className="flex mb-3"> */}
+                    {/*         <Server className="mr-2" /> */}
+                    {/*         <span>{service ? service : "Unknown Service"}</span> */}
+                    {/*       </p> */}
 
+                    {/*     </> */}
+                    {/*   ) */}
+                    {/*   } */}
+                    {/* </div> */}
 
-                              <div className="flex mb-3">
-                                <Clock className="mr-2" />
-                                <SecondCounter />
-                              </div>
+                    {/* <div className="my-5"> */}
+                    {/*   {!isCalling && !isRinging && !isInCall && ( */}
+                    {/*     <Input */}
+                    {/*       placeholder="Enter Phone Number" */}
+                    {/*       onChange={(e) => setPhoneNumber(e.target.value)} */}
+                    {/*       className="w-2/4 mx-auto mb-3" */}
+                    {/*     /> */}
+                    {/*   )} */}
+                    {/*   {isInCall && ( */}
+                    {/*     <> */}
+                    {/*       <Input */}
+                    {/*         placeholder="Enter DTMF To Send" */}
+                    {/*         onChange={(e) => { */}
+                    {/*           const number = e.target.value.at(-1); */}
+                    {/*           console.log(number); */}
+                    {/*           sendDTMF(number); */}
+                    {/*         }} */}
+                    {/*         className="w-2/4 mx-auto mb-3" */}
+                    {/*       /> */}
+                    {/*       <Input */}
+                    {/*         placeholder="Enter Number To Transfer" */}
+                    {/*         onChange={(e) => setDialpadNumber(e.target.value)} */}
+                    {/*         className="w-2/4 mx-auto mb-3" */}
+                    {/*       /> */}
+                    {/*     </> */}
+                    {/*   )} */}
+                    {/* </div> */}
 
-                            </>
-                          )
-                          }
-                        </div>
+                    <audio ref={audioElement} autoPlay className="hidden" />
+                    <audio ref={audioElement} src="/rintone.mp3" autoPlay className="hidden" />
 
-                        <div className="my-5">
-                          {!isCalling && !isRinging && !isInCall && (
-                            <Input
-                              placeholder="Enter Phone Number"
-                              onChange={(e) => setPhoneNumber(e.target.value)}
-                              className="w-2/4 mx-auto mb-3"
-                            />
-                          )}
-                          {isInCall && (
-                            <>
-                              <Input
-                                placeholder="Enter DTMF To Send"
-                                onChange={(e) => {
-                                  const number = e.target.value.at(-1);
-                                  sendDTMF(number);
-                                }}
-                                className="w-2/4 mx-auto mb-3"
-                              />
-                              <Input
-                                placeholder="Enter Number To Transfer"
-                                onChange={(e) => setDialpadNumber(e.target.value)}
-                                className="w-2/4 mx-auto mb-3"
-                              />
-                            </>
-                          )}
-                        </div>
+                    {/* {isCalling && !isInCall && <p>Calling...</p>} */}
 
-                        <audio ref={audioElement} autoPlay className="hidden" />
-                        {/* <audio ref={audioElement} src="/rintone.mp3" autoPlay className="hidden" /> */}
+                    {/* <div className="flex justify-center items-center"> */}
+                    {/*   {!isCalling && !isRinging && !isInCall && ( */}
+                    {/*     <button */}
+                    {/*       className={`${!phoneNumber ? "opacity-50" : ""} p-5 bg-green-400 rounded-full mr-3`} */}
+                    {/*       disabled={!phoneNumber} */}
+                    {/*       onClick={handleCall} */}
+                    {/*     > */}
+                    {/*       <PhoneCall /> */}
+                    {/*     </button> */}
+                    {/*   )} */}
+                    {/*   {isRinging && !isInCall && ( */}
+                    {/*     <> */}
+                    {/*       {!isCalling && <> */}
+                    {/*         <button onClick={handleAnswer} className="p-5 bg-green-400 rounded-full mr-3"> */}
+                    {/*           <PhoneIncoming /> */}
+                    {/*         </button> */}
 
-                        {isCalling && !isInCall && <p>Calling...</p>}
+                    {/*       </>} */}
+                    {/*       <button className="p-5 bg-red-400 rounded-full mr-3" onClick={handleHangup}> */}
+                    {/*         <PhoneOff /> */}
+                    {/*       </button> */}
+                    {/*     </> */}
+                    {/*   )} */}
 
-                        <div className="flex justify-center items-center">
-                          {!isCalling && !isRinging && !isInCall && (
-                            <button
-                              className={`${!phoneNumber ? "opacity-50" : ""} p-5 bg-green-400 rounded-full mr-3`}
-                              disabled={!phoneNumber}
-                              onClick={handleCall}
-                            >
-                              <PhoneCall />
-                            </button>
-                          )}
-                          {isRinging && !isInCall && (
-                            <>
-                              {!isCalling && <>
-                                <button onClick={handleAnswer} className="p-5 bg-green-400 rounded-full mr-3">
-                                  <PhoneIncoming />
-                                </button>
+                    {/* {isInCall && ( */}
+                    {/*   <> */}
+                    {/*     <button className="p-5 bg-red-400 rounded-full mr-3" onClick={handleHangup}> */}
+                    {/*       <PhoneOff /> */}
+                    {/*     </button> */}
+                    {/*     <button className="p-5 bg-red-400 rounded-full mr-3" onClick={transferCall}> */}
+                    {/*       <PhoneForwarded /> */}
+                    {/*     </button> */}
+                    {/*     {!isMuted ? <button className="p-5 bg-red-400 rounded-full mr-3" onClick={muteCall}> */}
+                    {/*       <MicOff /> */}
+                    {/*     </button> */}
+                    {/*       : <button className="p-5 bg-green-400 rounded-full mr-3" onClick={unmuteCall}> */}
+                    {/*         <MicOff /> */}
+                    {/*       </button> */}
+                    {/*     } */}
+                    {/*     {!isHold ? <button className="p-5 bg-red-400 rounded-full mr-3" onClick={holdCall}> */}
+                    {/*       <Hand /> */}
+                    {/*     </button> */}
+                    {/*       : <button className="p-5 bg-green-400 rounded-full mr-3" onClick={unHoldCall}> */}
+                    {/*         <Hand /> */}
+                    {/*       </button> */}
+                    {/*     } */}
 
-                              </>}
-                              <button className="p-5 bg-red-400 rounded-full mr-3" onClick={handleHangup}>
-                                <PhoneOff />
-                              </button>
-                            </>
-                          )}
+                    {/*   </> */}
+                    {/* )} */}
+                    {/* </div> */}
+                    {/* </div> */}
 
-                          {isInCall && (
-                            <>
-                              <button className="p-5 bg-red-400 rounded-full mr-3" onClick={handleHangup}>
-                                <PhoneOff />
-                              </button>
-                              <button className="p-5 bg-red-400 rounded-full mr-3" onClick={transferCall}>
-                                <PhoneForwarded />
-                              </button>
-                              {!isMuted ? <button className="p-5 bg-red-400 rounded-full mr-3" onClick={muteCall}>
-                                <MicOff />
-                              </button>
-                                : <button className="p-5 bg-green-400 rounded-full mr-3" onClick={unmuteCall}>
-                                  <MicOff />
-                                </button>
-                              }
-                              {!isHold ? <button className="p-5 bg-red-400 rounded-full mr-3" onClick={holdCall}>
-                                <Hand />
-                              </button>
-                                : <button className="p-5 bg-green-400 rounded-full mr-3" onClick={unHoldCall}>
-                                  <Hand />
-                                </button>
-                              }
-
-                            </>
-                          )}
-                        </div>
-                      </div>
-
-                    </div>
+                    {/* </div> */}
                     <div className="mt-4 p-4 border-2 rounded-lg">
                       <h3 className="text-center font-medium text-xl mb-3">Pause Me</h3>
                       {
