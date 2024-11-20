@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
-import { Delete, Hand, MicOff, PhoneCall, PhoneForwarded, PhoneIcon, PhoneIncoming, PhoneOff, Server, User } from 'lucide-react'
+import { Delete, Hand, MicOff, PhoneCall, PhoneForwarded, Binary, PhoneIncoming, PhoneOff, Server, User } from 'lucide-react'
 import { RTCSession } from 'jssip/lib/RTCSession'
 
 export function WebPhoneComponent({ ua, agentData, providerAddress }) {
@@ -66,9 +66,11 @@ export function WebPhoneComponent({ ua, agentData, providerAddress }) {
   }
 
   const handleSessionConfirmed = () => {
+    ringtoneRef.current?.pause()
     setIsInCall(true)
     setIsRinging(false)
     stopRingtone()
+    setPhoneNumber("")
     setupAudioStream()
   }
 
@@ -76,6 +78,8 @@ export function WebPhoneComponent({ ua, agentData, providerAddress }) {
     setIsInCall(false)
     setIsRinging(false)
     setIsCalling(false)
+    setDialpadNumber("")
+    setPhoneNumber("")
     resetCall()
   }
 
@@ -83,6 +87,8 @@ export function WebPhoneComponent({ ua, agentData, providerAddress }) {
     stopRingtone()
     setIsCalling(false)
     setIsInCall(false)
+    setDialpadNumber("")
+    setPhoneNumber("")
     setIsRinging(false)
     resetCall()
   }
@@ -134,7 +140,7 @@ export function WebPhoneComponent({ ua, agentData, providerAddress }) {
       const callSession = ua?.call(destination, options)
       setSession(callSession)
 
-      /*  callSession?.on("progress", setupAudioStream) */
+      callSession?.on("progress", setupAudioStream)
       callSession?.on("accepted", handleSessionConfirmed)
     }
   }
@@ -226,37 +232,49 @@ export function WebPhoneComponent({ ua, agentData, providerAddress }) {
             </div>
           </div>
 
-          {isInCall && (
+          {isInCall || isCalling || isRinging && (
             <div className="mb-4 text-center">
               <Avatar className="h-20 w-20 mx-auto mb-2">
                 <AvatarFallback><User className="h-12 w-12" /></AvatarFallback>
               </Avatar>
-              <p className="text-lg font-semibold">{inviteNumber || "Unknown"}</p>
+              <p className="text-lg font-semibold">{inviteNumber ? inviteNumber : phoneNumber || "Unknown"}</p>
               <p className="text-sm text-gray-500">{formatDuration(callDuration)}</p>
             </div>
           )}
 
-          {!isInCall && !isRinging && (
-            <div className="mb-4">
-              <div className="flex">
-                <Input
-                  type="tel"
-                  placeholder="Phone Number"
-                  value={phoneNumber}
-                  focus={true}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  className="flex-grow mr-2"
-                />
-                <Button
-                  variant="outline"
-                  onClick={() => setPhoneNumber(prev => prev.slice(0, -1))}
-                  disabled={phoneNumber.length === 0}
-                >
-                  <Delete className="h-4 w-4" />
-                </Button>
-              </div>
+          {/* {isInCall && !isRinging && ( */}
+          <div className="mb-4">
+            <div className="flex">
+              <Input
+                type="tel"
+                placeholder="Phone Number"
+                value={isInCall ? dialpadNumber : phoneNumber}
+                focus={true}
+                onChange={(e) => {
+                  if (isInCall) {
+                    setDialpadNumber(e.target.value)
+                  } else {
+                    setPhoneNumber(e.target.value)
+                  }
+                }}
+                className="flex-grow mr-2"
+              />
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (isInCall) {
+                    setDialpadNumber(prev => prev.slice(0, -1))
+                  } else {
+                    setPhoneNumber(prev => prev.slice(0, -1))
+                  }
+                }}
+                disabled={phoneNumber.length === 0}
+              >
+                <Delete className="h-4 w-4" />
+              </Button>
             </div>
-          )}
+          </div>
+          {/* )} */}
 
           {(showDialpad || !isInCall) && (
             <div className="grid grid-cols-3 gap-2 mb-4">
@@ -266,7 +284,7 @@ export function WebPhoneComponent({ ua, agentData, providerAddress }) {
                   variant="outline"
                   onClick={() => {
                     if (isInCall) {
-                      sendDTMF(digit)
+                      setDialpadNumber(prev => prev + digit)
                     } else {
                       setPhoneNumber(prev => prev + digit)
                     }
@@ -297,6 +315,13 @@ export function WebPhoneComponent({ ua, agentData, providerAddress }) {
                 Hang Up
               </Button>
             )}
+            {isRinging && !isCalling && !isInCall && (
+              <Button className="bg-green-500 hover:bg-green-600" onClick={sendDTMF}>
+                <Binary className="mr-2 h-4 w-4" />
+                Send DTMF
+              </Button>
+            )}
+
             {isInCall && (
               <>
                 <Button variant="outline" onClick={isMuted ? unmuteCall : muteCall}>

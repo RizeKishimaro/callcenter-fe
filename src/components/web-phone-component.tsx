@@ -85,7 +85,7 @@ export function WebPhoneComponent() {
               <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
             </span>
           </div>
-          {isInCall && (
+          {!isInCall && (
             <Card>
               <CardContent className="flex flex-col items-center justify-center pt-6">
                 <Avatar className="h-20 w-20 mb-4">
@@ -153,6 +153,12 @@ export function WebPhoneComponent() {
               <Button onClick={handleAnswer}>
                 <PhoneIncoming className="mr-2" />
                 Answer
+              </Button>
+            )}
+            {(isInCall || isRinging) && (
+              <Button variant="destructive" onClick={handleHangup}>
+                <PhoneOff className="mr-2" />
+                Hang Up
               </Button>
             )}
             {(isInCall || isRinging) && (

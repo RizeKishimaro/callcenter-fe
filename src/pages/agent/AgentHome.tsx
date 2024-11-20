@@ -36,11 +36,7 @@ const AgentHome = () => {
   const [isCalling, setIsCalling] = useState(false);
   const [isInCall, setIsInCall] = useState(false);
   const [service, setService] = useState(false);
-  const [isMuted, setIsMuted] = useState(false)
-  const [isHold, setIsHold] = useState(false);
   const [isRinging, setIsRinging] = useState(false);
-  const [dialpadNumber, setDialpadNumber] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
   const [inviteNumber, setInviteNumber] = useState("");
   const [clientCount, setClientCount] = useState(0)
   const [providerAddress, setProviderAddress] = useState(null);
@@ -110,11 +106,9 @@ const AgentHome = () => {
 
     // Listen for window close or tab close
     window.addEventListener('beforeunload', handleBeforeUnload);
-    const handleRouteChange = () => {
-      socket.emit('disconnectAgent');
-      socket.disconnect();
-    };
 
+
+    JsSIP.debug.enable('JsSIP:*');
     // Listen for route changes
     // Clean up the event listener when the component is unmounted
     getAgentInfo()
@@ -129,6 +123,7 @@ const AgentHome = () => {
       const wsSocket = new JsSIP.WebSocketInterface(`${import.meta.env.VITE_APP_WEBSOCKET_HOST}:${import.meta.env.VITE_APP_WEBSOCKET_PORT}/ws`)
       const configuration: UAConfiguration = {
         uri: `sip:${agentAccount.sipUsername}_${prefix}@${import.meta.env.VITE_APP_SIP_HOST}`,
+        user_agent: "NextGenCC",
         sockets: [wsSocket],
         authorization_user: `${agentAccount.sipUsername}_${prefix}`,
         password: agentAccount.sipPassword,
