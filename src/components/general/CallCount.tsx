@@ -35,9 +35,9 @@ const CallCount = (props: Props) => {
         {/* Waiting Calls */}
         <div className="flex items-center justify-center flex-col">
           <h1 className='xl:text-9xl lg:text-6xl text-3xl'>
-            {queueStatus?.waitingCalls || '0'}
+            {queueStatus?.maxCalls || '0'}
           </h1>
-          <h3 className='uppercase text-xs md:text-sm lg:text-md'>waiting calls</h3>
+          <h3 className='uppercase text-xs md:text-sm lg:text-md'>Total calls</h3>
         </div>
 
         {/* Missed Calls */}

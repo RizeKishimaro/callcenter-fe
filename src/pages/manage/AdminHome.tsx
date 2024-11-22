@@ -49,7 +49,6 @@ const AdminHome = () => {
 
 
     socket.on('allAgentsData', (agentsData) => {
-      console.log(agentsData)
       setConnectedSockets(agentsData);
     });
 
@@ -142,6 +141,11 @@ const AdminHome = () => {
       socket.off('connect');
       socket.off('allAgentsData');
       socket.off("queueStatus")
+      socket.off("incall")
+      socket.off("idle")
+      socket.off("disconnectAgent")
+      socket.off("ended")
+      socket.off("failed")
     };
   }, []);
 
@@ -149,7 +153,7 @@ const AdminHome = () => {
     <div className="flex flex-col lg:flex-row p-3 gap-x-3">
       <div className="flex-1 flex flex-col lg:gap-y-5 md:gap-y-3">
         <div className="flex flex-col md:flex-row gap-x-3">
-          <div className="w-3/5"><SipInfo /></div>
+          <div className="w-3/5"><SipInfo id={managerAccount.agentId} /></div>
           <div className="w-2/5 h-2/3 overflow-scroll"><QueueStatusMember queueMembers={connectedSockets} /></div>
         </div>
         <div className=""><CallCount /></div>

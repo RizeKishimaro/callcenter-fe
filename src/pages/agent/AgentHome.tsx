@@ -79,14 +79,14 @@ const AgentHome = () => {
     setPrefix(data?.data?.Campaign?.prefix)
     setAgentData(data.data);
     setProviderAddress(data?.data?.Campaign?.SipProvider?.host)
+    const { status } = await axiosInstance.post(`/agent/loginQueue`, {
+      username: `${agentAccount.sipUsername}_${data?.data?.Campaign?.prefix}`,
+      campaign: data?.data?.Campaign?.name
+    })
+
     return data
   };
-  const sendInactiveAgent = () => {
-    socket.emit("incall", {
-      isActive: isInCall
-    });
 
-  }
   const sendActiveAgent = () => {
     socket.emit("idle", {
       isActive: isInCall

@@ -3,14 +3,22 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../ui/card
 import { RefreshCcw } from 'lucide-react'
 import { Separator } from '../ui/separator'
 import { Progress } from '../ui/progress'
+import axiosInstance from '../../providers/axiosClient'
 
-type Props = {}
+type Props = {
+  id: string,
+
+}
 
 const SipInfo = (props: Props) => {
   const [cpuPercentage, setCpuPercentage] = useState(0);
   const [memoryPercentage, setMemoryPercentage] = useState(0);
   const [diskSpacePercentage, setDiskSpacePercentage] = useState(0);
   const [message, setMessage] = useState()
+  const getProviderData = async () => {
+    await axiosInstance.get(``)
+  }
+  console.log(props)
   useEffect(() => {
     const eventSource = new EventSource(`${import.meta.env.VITE_APP_BACKEND_URL}sysinfo`);
 
