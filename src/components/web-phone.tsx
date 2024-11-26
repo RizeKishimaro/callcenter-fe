@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Delete, Hand, MicOff, PhoneCall, PhoneForwarded, Binary, PhoneIncoming, PhoneOff, Server, User } from 'lucide-react'
 import { RTCSession } from 'jssip/lib/RTCSession'
+import { UA } from 'jssip'
 
-export function WebPhoneComponent({ ua, agentData, providerAddress }) {
+export function WebPhoneComponent({ ua, providerAddress }: { ua: UA, providerAddress: string }) {
   const [session, setSession] = useState<RTCSession | null>(null)
   const [isCalling, setIsCalling] = useState(false)
   const [isInCall, setIsInCall] = useState(false)
@@ -228,7 +229,9 @@ export function WebPhoneComponent({ ua, agentData, providerAddress }) {
             <h2 className="text-2xl font-bold">WebPhone</h2>
             <div className="flex items-center">
               <span className="mr-2">Status:</span>
-              <span className={`h-3 w-3 rounded-full ${isInCall ? 'bg-green-500' : 'bg-red-500'}`}></span>
+              <span className='h-3 w-3 rounded-full bg-green-500 animate-ping'>
+              </span>
+
             </div>
           </div>
 

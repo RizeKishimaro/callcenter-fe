@@ -2,7 +2,6 @@
 import { useRef, useState, useEffect, useMemo } from "react";
 import JsSIP, { NameAddrHeader, UA } from "jssip";
 import { RTCSession } from "jssip/lib/RTCSession";
-import { Clock, Hand, MicOff, PhoneCall, PhoneForwarded, PhoneIcon, PhoneIncoming, PhoneOff, PhoneOffIcon, Server } from "lucide-react";
 import {
   Input,
 } from "../../components/ui/input";
@@ -87,12 +86,7 @@ const AgentHome = () => {
     return data
   };
 
-  const sendActiveAgent = () => {
-    socket.emit("idle", {
-      isActive: isInCall
-    });
 
-  }
 
 
 
@@ -108,7 +102,6 @@ const AgentHome = () => {
     window.addEventListener('beforeunload', handleBeforeUnload);
 
 
-    JsSIP.debug.enable('JsSIP:*');
     // Listen for route changes
     // Clean up the event listener when the component is unmounted
     getAgentInfo()
@@ -147,45 +140,32 @@ const AgentHome = () => {
       };
     }
   }, [prefix]);
+  const sendActiveAgent = () => {
+    socket.emit("idle", {
+      isActive: isInCall
+    });
+  }
+  const sendInactiveAgent = () => {
+    socket.emit("incall", {
+      isActive: isInCall
+    });
 
+  }
   useEffect(() => {
     const applySetInvite = (number) => {
       setInviteNumber(number);
     }
     ua?.on("newRTCSession", (e) => {
       const session: RTCSession = e?.session;
-
-      setIsRinging((prevState) => true);
-      if (session.direction === 'incoming') playRingtone();
-
-
-      // when is rinning is true, I want to play the audio call rintone
+      setIsRinging(true);
       const number = session?.remote_identity?.display_name?.toString()
-
-      const serviceName = session ? e?.request?.headers?.['X-Service-From']?.[0]?.raw : "Unknown";
-      setService(serviceName);
       setSession(session)
       applySetInvite(number)
-      const peerConnection = session.connection;
-
-      session?.on("progress", () => {
-        peerConnection?.getReceivers().forEach((receiver) => {
-          if (receiver.track.kind === 'audio') {
-            if (audioElement.current) {
-              const remoteStream = new MediaStream();
-              remoteStream.addTrack(receiver.track);
-              audioElement.current.srcObject = remoteStream;
-              audioElement.current.play();
-            }
-          }
-        });
-      });
-
       session.on('confirmed', () => {
-        // when session is confirmed, stop playing audio
+        console.log("incall ")
         setIsInCall(true);
         setIsRinging(false);
-        stopRingtone()
+        const peerConnection = session.connection;
 
         peerConnection.getReceivers().forEach((receiver) => {
           if (receiver.track.kind === 'audio') {
@@ -200,16 +180,17 @@ const AgentHome = () => {
 
       });
 
-
       session.on('ended', (data) => {
-        queryClient.invalidateQueries({ queryKey: ["callhistory"] })
-        if (agentData && !isInCall) {
+        if (agentData) {
           const total_second = (new Date(session?.end_time).getTime() - new Date(session?.start_time).getTime()) / 1000
           const hangUpfrom = !data?.message?.from ? agentAccount.agentId : null
+          console.log(agentData)
           sendCallHistory(session?.remote_identity.uri.user,
             session.local_identity.uri.user, hangUpfrom, null, session.start_time, session?.end_time,
             total_second, data.cause, agentData?.Campaign?.name, session?.direction)
-          // handlePause(agentAccount.sipUsername, agentData?.Campaign?.name)
+          handlePause(agentAccount.sipUsername, agentData?.Campaign?.name)
+        } else {
+          console.log("No Data FOund")
         }
         setIsInCall(false);
         setIsRinging(false);
@@ -219,15 +200,14 @@ const AgentHome = () => {
 
       session.on('failed', (data) => {
         if (agentData) {
-          queryClient.invalidateQueries({ queryKey: ["callhistory"] })
-          const total_second = isNaN((new Date(session?.end_time).getTime() - new Date(session?.start_time).getTime()) / 1000) && null
+          const total_second = !isNaN((new Date(session?.end_time).getTime() - new Date(session?.start_time).getTime()) / 1000) && null
           const hangUpfrom = !data?.message?.from ? agentAccount.agentId : null
           sendCallHistory(session?.remote_identity.uri.user,
             session.local_identity.uri.user, hangUpfrom, null, session.start_time, session?.end_time,
             total_second, data.cause, agentData?.Campaign?.name, session?.direction)
         }
         sendActiveAgent()
-        stopRingtone()
+
         setIsCalling(false);
         setIsInCall(false)
         setIsRinging(false);
@@ -236,7 +216,6 @@ const AgentHome = () => {
 
     });
     ua?.on("connected", () => {
-      setWebphoneStatus(true)
     });
     ua?.on("disconnected", () => {
       ua?.start()
@@ -247,7 +226,7 @@ const AgentHome = () => {
       setAccountStatus(true);
     })
     ua?.on("unregistered", () => {
-      ua?.register();
+      // ua?.register();
       console.log("unregistered")
       setAccountStatus(false)
     })
@@ -255,14 +234,8 @@ const AgentHome = () => {
 
 
     return () => {
-      ua?.off("newRTCSession", () => { });
-      ua?.off("connected", () => { });
-      ua?.off("disconnected", () => { });
-      ua?.off("registered", () => { });
-      ua?.off("unregistered", () => { });
     };
-  }, [ua]);
-  useEffect(() => {
+  }, [ua]); useEffect(() => {
     if (isInCall) {
       sendInactiveAgent()
     }
@@ -403,7 +376,6 @@ const AgentHome = () => {
       campaign: campaign_name,
       reason: pauseReason
     });
-    console.log(status)
     if (!status.toString().startsWith("2")) {
       setIsPaused(false)
       return 0;
@@ -465,7 +437,7 @@ const AgentHome = () => {
                               <p className="text-2xl font-bold">{agentData?.name}<span className="font-normal ml-2">({agentData?.sipName})</span></p>
                             </div>
                             <div className="mt-3">
-                              status: {accountStatus ? <span
+                              Heartbeat: {accountStatus ? <span
                                 className="inline-block text-muted whitespace-nowrap rounded-full bg-emerald-200 px-[0.65em] pb-[0.25em] pt-[0.35em] text-center align-baseline text-[0.75em] font-bold leading-none text-success-700 dark:bg-emerald-700 dark:text-success-500/80">
                                 online
                               </span> : <span
@@ -524,7 +496,7 @@ const AgentHome = () => {
                   </div>
                   <div className="md:w-2/4 w-full h-full my-auto p-4 flex flex-col">
 
-                    <WebPhoneComponent ua={ua} agentData={agentData} providerAddress={providerAddress} />
+                    <WebPhoneComponent ua={ua} providerAddress={providerAddress} />
                     {/* <div className="border-2 rounded-lg p-3 mb-3"> */}
                     {/* <div className=" text-center flex items-center justify-center"> */}
                     {/*   <p className="text-xl font-medium">WebPhone</p> */}
@@ -604,7 +576,7 @@ const AgentHome = () => {
                     {/* </div> */}
 
                     <audio ref={audioElement} autoPlay className="hidden" />
-                    <audio ref={audioElement} src="/rintone.mp3" autoPlay className="hidden" />
+                    <audio ref={ringtoneRef} src="/ringtone.mp3" className="hidden" />
 
                     {/* {isCalling && !isInCall && <p>Calling...</p>} */}
 
