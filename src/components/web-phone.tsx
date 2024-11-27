@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Delete, Hand, MicOff, PhoneCall, PhoneForwarded, Binary, PhoneIncoming, PhoneOff, Server, User } from 'lucide-react'
 import { RTCSession } from 'jssip/lib/RTCSession'
 import { UA } from 'jssip'
+import SecondCounter from '../pages/agent/SecondCounter'
 
 export function WebPhoneComponent({ ua, providerAddress }: { ua: UA, providerAddress: string }) {
   const [session, setSession] = useState<RTCSession | null>(null)
@@ -126,7 +127,6 @@ export function WebPhoneComponent({ ua, providerAddress }: { ua: UA, providerAdd
   }
 
   const handleCall = () => {
-    console.log(ua)
     if (ua && !isCalling && !isInCall) {
       setIsCalling(true)
       setInviteNumber(phoneNumber)
@@ -177,7 +177,8 @@ export function WebPhoneComponent({ ua, providerAddress }: { ua: UA, providerAdd
 
   const holdCall = () => {
     if (session) {
-      session.sendDTMF("#700")
+
+      session?.hold()
       setIsHold(true)
     }
   }
@@ -227,23 +228,31 @@ export function WebPhoneComponent({ ua, providerAddress }: { ua: UA, providerAdd
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold">WebPhone</h2>
-            <div className="flex items-center">
-              <span className="mr-2">Status:</span>
-              <span className='h-3 w-3 rounded-full bg-green-500 animate-ping'>
-              </span>
 
+
+            <div className="flex items-center justify-center">
+              <p>Heartbeat:</p>
+              <span className="relative flex ml-3">
+                <span
+                  className={`relative inline-flex items-center justify-center text-2xl ${ua?.isConnected() ? "animate-heartbeat text-green-600" : "text-red-600"
+                    }`}
+                >
+                  ❤️
+                </span>
+              </span>
             </div>
           </div>
+          <div className="mb-4 text-center">
+            <Avatar className="h-20 w-20 mx-auto mb-2">
+              <AvatarFallback><User className="h-12 w-12" /></AvatarFallback>
+            </Avatar>
+            <p className="text-lg font-semibold">{inviteNumber ? inviteNumber : phoneNumber || "Unknown"}</p>
+            {isInCall && (
+              <SecondCounter inCall={isInCall} />
 
-          {isInCall || isCalling || isRinging && (
-            <div className="mb-4 text-center">
-              <Avatar className="h-20 w-20 mx-auto mb-2">
-                <AvatarFallback><User className="h-12 w-12" /></AvatarFallback>
-              </Avatar>
-              <p className="text-lg font-semibold">{inviteNumber ? inviteNumber : phoneNumber || "Unknown"}</p>
-              <p className="text-sm text-gray-500">{formatDuration(callDuration)}</p>
-            </div>
-          )}
+            )}
+          </div>
+
 
           {/* {isInCall && !isRinging && ( */}
           <div className="mb-4">
@@ -271,7 +280,7 @@ export function WebPhoneComponent({ ua, providerAddress }: { ua: UA, providerAdd
                     setPhoneNumber(prev => prev.slice(0, -1))
                   }
                 }}
-                disabled={phoneNumber.length === 0}
+                disabled={isInCall ? dialpadNumber.length === 0 : phoneNumber.length === 0}
               >
                 <Delete className="h-4 w-4" />
               </Button>
@@ -318,13 +327,6 @@ export function WebPhoneComponent({ ua, providerAddress }: { ua: UA, providerAdd
                 Hang Up
               </Button>
             )}
-            {isRinging && !isCalling && !isInCall && (
-              <Button className="bg-green-500 hover:bg-green-600" onClick={sendDTMF}>
-                <Binary className="mr-2 h-4 w-4" />
-                Send DTMF
-              </Button>
-            )}
-
             {isInCall && (
               <>
                 <Button variant="outline" onClick={isMuted ? unmuteCall : muteCall}>
@@ -339,6 +341,13 @@ export function WebPhoneComponent({ ua, providerAddress }: { ua: UA, providerAdd
                   <PhoneForwarded className="mr-2 h-4 w-4" />
                   Transfer
                 </Button>
+                <Button className="bg-green-500 hover:bg-green-600" onClick={() => {
+                  sendDTMF(dialpadNumber)
+                }}>
+                  <Binary className="mr-2 h-4 w-4" />
+                  Send DTMF
+                </Button>
+
                 <Button variant="outline" onClick={() => setShowDialpad(!showDialpad)}>
                   {showDialpad ? "Hide Dialpad" : "Show Dialpad"}
                 </Button>

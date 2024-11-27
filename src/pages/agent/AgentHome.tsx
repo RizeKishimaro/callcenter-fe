@@ -24,6 +24,7 @@ import { UAConfiguration } from "jssip/lib/UA";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "react-router-dom";
 import { WebPhoneComponent } from "../../components/web-phone";
+import Crmform from "../../components/form/crm-form";
 
 const AgentHome = () => {
   const remoteAudioRef = useRef(null);
@@ -125,6 +126,7 @@ const AgentHome = () => {
 
 
       const userAgent = new JsSIP.UA(configuration);
+      JsSIP.debug.enable('JsSIP:*');
 
 
       setUa(userAgent)
@@ -188,7 +190,6 @@ const AgentHome = () => {
           sendCallHistory(session?.remote_identity.uri.user,
             session.local_identity.uri.user, hangUpfrom, null, session.start_time, session?.end_time,
             total_second, data.cause, agentData?.Campaign?.name, session?.direction)
-          handlePause(agentAccount.sipUsername, agentData?.Campaign?.name)
         } else {
           console.log("No Data FOund")
         }
@@ -437,7 +438,7 @@ const AgentHome = () => {
                               <p className="text-2xl font-bold">{agentData?.name}<span className="font-normal ml-2">({agentData?.sipName})</span></p>
                             </div>
                             <div className="mt-3">
-                              Heartbeat: {accountStatus ? <span
+                              Sip Status: {accountStatus ? <span
                                 className="inline-block text-muted whitespace-nowrap rounded-full bg-emerald-200 px-[0.65em] pb-[0.25em] pt-[0.35em] text-center align-baseline text-[0.75em] font-bold leading-none text-success-700 dark:bg-emerald-700 dark:text-success-500/80">
                                 online
                               </span> : <span
@@ -455,42 +456,10 @@ const AgentHome = () => {
                           <div className="mt-3 w-full flex gap-3 mx-auto justify-center">
                             <p className="mb-1 font-bold flex flex-col text-center ">{agentData?.outgoing || 0} <span className="font-normal">Outbound</span></p>
                             <p className="mb-1 font-bold flex flex-col text-center">{agentData?.incoming || 0}<span className="font-normal">Inbound</span></p>
-                            <p className="mb-1 font-bold flex flex-col text-center">{agentData?.totalCallTime || 0}<span className="font-normal">Total Call Time</span></p>
+                            <p className="mb-1 font-bold flex flex-col text-center">{agentData?.totalSeconds || 0} (S)<span className="font-normal">Total Call Time</span></p>
                           </div>
                         </div>
-                        <div className="mt-10 w-[75%] mx-auto">
-                          <div className="font-bold">
-                            <p className="text-center">CRM Form</p>
-                          </div>
-                          <div className="mt-3">
-                            <div className="mb-2">
-                              <Input type="text" placeholder="CRM Information" />
-                            </div>
-                            <div className="mb-2">
-                              <Input type="text" placeholder="CRM Information" />
-                            </div>
-                            <div className="mb-2">
-                              <Select>
-                                <SelectTrigger className="w-full">
-                                  <SelectValue placeholder="CRM Information" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectGroup>
-                                    <SelectLabel>Select Commands</SelectLabel>
-                                    <SelectItem value="ssh">SSH</SelectItem>
-                                    <SelectItem value="pwd">PWD</SelectItem>
-                                    <SelectItem value="ip">IP</SelectItem>
-                                    <SelectItem value="whoami">WhoAmI</SelectItem>
-                                    <SelectItem value="sudo">Sudo</SelectItem>
-                                  </SelectGroup>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div className="text-center">
-                              <Button variant={"secondary"} >Submit</Button>
-                            </div>
-                          </div>
-                        </div>
+                        <Crmform />
                       </div>
                     </div>
                   </div>

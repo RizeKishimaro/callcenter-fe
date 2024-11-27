@@ -1,16 +1,24 @@
+
 import React, { useState, useEffect } from 'react';
 
-const SecondCounter = () => {
+const SecondCounter = ({ inCall }) => {
   const [seconds, setSeconds] = useState(0);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setSeconds(prevSeconds => prevSeconds + 1);
-    }, 1000);
+    let interval;
 
-    // Cleanup interval on component unmount
+    if (inCall) {
+      interval = setInterval(() => {
+        setSeconds((prevSeconds) => prevSeconds + 1);
+      }, 1000);
+    } else {
+      // Reset the counter when the call ends
+      setSeconds(0);
+    }
+
+    // Cleanup the interval when `inCall` becomes false or on unmount
     return () => clearInterval(interval);
-  }, []);
+  }, [inCall]); // Depend on `inCall`
 
   const formatTime = (totalSeconds) => {
     const hours = Math.floor(totalSeconds / 3600);
@@ -22,7 +30,7 @@ const SecondCounter = () => {
 
   return (
     <div>
-      <p>Time: {formatTime(seconds)}</p>
+      <p>{formatTime(seconds)}</p>
     </div>
   );
 };
