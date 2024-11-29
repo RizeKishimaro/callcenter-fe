@@ -58,7 +58,7 @@ const Sidebar = ({ userRole, isCollapsed }: { userRole: string, isCollapsed: boo
   const links = roleBasedAccess[userRole] || [];
 
   return (
-    <div className='h-screen bg-dashboardPrimary text-white'>
+    <div className='h-screen dark:bg-gray-950 bg-gray-200 text-black dark:text-white'>
       <Nav
         isCollapsed={isCollapsed}
         links={[

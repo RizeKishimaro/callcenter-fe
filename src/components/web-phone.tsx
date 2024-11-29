@@ -9,7 +9,7 @@ import { RTCSession } from 'jssip/lib/RTCSession'
 import { UA } from 'jssip'
 import SecondCounter from '../pages/agent/SecondCounter'
 
-export function WebPhoneComponent({ ua, providerAddress }: { ua: UA, providerAddress: string }) {
+export function WebPhoneComponent({ ua, providerAddress, accountStatus }: { ua: UA, providerAddress: string, accountStatus: boolean }) {
   const [session, setSession] = useState<RTCSession | null>(null)
   const [isCalling, setIsCalling] = useState(false)
   const [isInCall, setIsInCall] = useState(false)
@@ -20,25 +20,13 @@ export function WebPhoneComponent({ ua, providerAddress }: { ua: UA, providerAdd
   const [dialpadNumber, setDialpadNumber] = useState("")
   const [phoneNumber, setPhoneNumber] = useState("")
   const [inviteNumber, setInviteNumber] = useState("")
-  const [callDuration, setCallDuration] = useState(0)
+  const [transferStatus, setTransferStatus] = useState("")
   const [showDialpad, setShowDialpad] = useState(true)
 
   const audioElement = useRef<HTMLAudioElement | null>(null)
   const ringtoneRef = useRef<HTMLAudioElement | null>(null)
 
-  useEffect(() => {
-    let interval = null
-    if (isInCall) {
-      interval = setInterval(() => {
-        setCallDuration((prevDuration) => prevDuration + 1)
-      }, 1000)
-    } else {
-      setCallDuration(0)
-    }
-    return () => {
-      if (interval) clearInterval(interval)
-    }
-  }, [isInCall])
+
 
   useEffect(() => {
     if (ua) {
@@ -50,6 +38,12 @@ export function WebPhoneComponent({ ua, providerAddress }: { ua: UA, providerAdd
       }
     }
   }, [ua])
+  useEffect(() => {
+    if (session) {
+      session.on('progress', setupAudioStream)
+    }
+
+  }, [session])
 
   const handleNewRTCSession = (e) => {
     const session = e?.session
@@ -72,7 +66,6 @@ export function WebPhoneComponent({ ua, providerAddress }: { ua: UA, providerAdd
     setIsInCall(true)
     setIsRinging(false)
     stopRingtone()
-    setPhoneNumber("")
     setupAudioStream()
   }
 
@@ -80,6 +73,7 @@ export function WebPhoneComponent({ ua, providerAddress }: { ua: UA, providerAdd
     setIsInCall(false)
     setIsRinging(false)
     setIsCalling(false)
+    setTransferStatus("")
     setDialpadNumber("")
     setPhoneNumber("")
     resetCall()
@@ -88,6 +82,7 @@ export function WebPhoneComponent({ ua, providerAddress }: { ua: UA, providerAdd
   const handleSessionFailed = () => {
     stopRingtone()
     setIsCalling(false)
+    setTransferStatus("")
     setIsInCall(false)
     setDialpadNumber("")
     setPhoneNumber("")
@@ -95,21 +90,29 @@ export function WebPhoneComponent({ ua, providerAddress }: { ua: UA, providerAdd
     resetCall()
   }
 
+
+
   const setupAudioStream = () => {
     if (session && audioElement.current) {
-      const peerConnection = session.connection
-      console.log(peerConnection?.getReceivers())
+      const peerConnection = session.connection;
+
       peerConnection?.getReceivers().forEach((receiver) => {
-        console.log(receiver)
-        if (receiver.track.kind === 'audio' && audioElement.current) {
-          const remoteStream = new MediaStream()
-          remoteStream.addTrack(receiver.track)
-          audioElement.current.srcObject = remoteStream
-          audioElement.current.play()
+        if (receiver.track.kind === "audio" && audioElement.current) {
+
+          const remoteStream = new MediaStream();
+          remoteStream.addTrack(receiver.track);
+          audioElement.current.srcObject = remoteStream;
+
+          audioElement.current.play().catch((error) => {
+            console.error("Playback failed during progress:", error);
+          });
+
+          // Check RTP stats for early media
         }
-      })
+      });
     }
-  }
+  };
+
 
   const playRingtone = () => {
     if (ringtoneRef.current) {
@@ -133,6 +136,7 @@ export function WebPhoneComponent({ ua, providerAddress }: { ua: UA, providerAdd
       const options = {
         mediaConstraints: { audio: true, video: false },
         sessionDescriptionHandlerOptions: {
+          earlyMedia: true,
           constraints: { audio: true, video: false },
         },
       }
@@ -177,7 +181,6 @@ export function WebPhoneComponent({ ua, providerAddress }: { ua: UA, providerAdd
 
   const holdCall = () => {
     if (session) {
-
       session?.hold()
       setIsHold(true)
     }
@@ -189,14 +192,61 @@ export function WebPhoneComponent({ ua, providerAddress }: { ua: UA, providerAdd
       setIsHold(false)
     }
   }
+  const transferSurvey = () => {
+    if (session && session.isEstablished()) {
+      const surveyExtension = 'sip:2251@testnope'; // Replace with your survey extension
+
+      const options = {
+        extraHeaders: [
+          'Referred-By: <sip:${phoneNumber}@192.168.130.20>', // Optional: Caller ID or metadata
+        ],
+      };
+
+      try {
+        session.refer(surveyExtension, options);
+        console.log('Call transferred to survey IVR:', surveyExtension);
+      } catch (error) {
+        console.error('Error transferring call to survey IVR:', error);
+      }
+    } else {
+      console.error('No active session to transfer');
+    }
+  }
+
 
   const transferCall = () => {
     if (session && dialpadNumber) {
-      const target = `sip:${dialpadNumber}@${providerAddress}`
-      session.refer(target)
-      setDialpadNumber('')
+      const target = `sip:${dialpadNumber}@${providerAddress}`;
+      const callerId = session.remote_identity.uri.toAor();
+
+      const options = {
+        extraHeaders: [
+          `Referred-By: <${callerId}>` // Set the Referred-By header with the current caller ID
+        ],
+        eventHandlers: {
+          trying: () => {
+            setTransferStatus(`Trying to ${dialpadNumber}`)
+          },
+          requestSucceeded: () => {
+            console.log("transfer success")
+            setTransferStatus(`Response OK!`)
+          },
+          requestFailed: (error) => {
+            console.log("transfer failed", error)
+            setTransferStatus(`Response Failed!`)
+          },
+
+        }
+      };
+
+      try {
+        session.refer(target, options); // Perform the call transfer
+        setDialpadNumber('');
+      } catch (error) {
+        console.error('Error transferring call:', error);
+      }
     }
-  }
+  };
 
   const sendDTMF = (value) => {
     if (session && isInCall && value) {
@@ -234,7 +284,7 @@ export function WebPhoneComponent({ ua, providerAddress }: { ua: UA, providerAdd
               <p>Heartbeat:</p>
               <span className="relative flex ml-3">
                 <span
-                  className={`relative inline-flex items-center justify-center text-2xl ${ua?.isConnected() ? "animate-heartbeat text-green-600" : "text-red-600"
+                  className={`relative inline-flex items-center justify-center text-2xl ${accountStatus ? "animate-heartbeat text-green-600" : "text-red-600"
                     }`}
                 >
                   ❤️
@@ -247,6 +297,10 @@ export function WebPhoneComponent({ ua, providerAddress }: { ua: UA, providerAdd
               <AvatarFallback><User className="h-12 w-12" /></AvatarFallback>
             </Avatar>
             <p className="text-lg font-semibold">{inviteNumber ? inviteNumber : phoneNumber || "Unknown"}</p>
+            {isInCall && transferStatus && (
+              <p>{transferStatus}</p>
+
+            )}
             {isInCall && (
               <SecondCounter inCall={isInCall} />
 
@@ -340,6 +394,10 @@ export function WebPhoneComponent({ ua, providerAddress }: { ua: UA, providerAdd
                 <Button variant="outline" onClick={transferCall} disabled={!dialpadNumber}>
                   <PhoneForwarded className="mr-2 h-4 w-4" />
                   Transfer
+                </Button>
+                <Button variant="outline" onClick={transferSurvey}>
+                  <PhoneForwarded className="mr-2 h-4 w-4" />
+                  Transfer Survey
                 </Button>
                 <Button className="bg-green-500 hover:bg-green-600" onClick={() => {
                   sendDTMF(dialpadNumber)

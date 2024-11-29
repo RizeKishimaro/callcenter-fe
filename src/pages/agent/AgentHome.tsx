@@ -6,14 +6,13 @@ import {
   Input,
 } from "../../components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
 import { socket } from "../../providers/socket/socket";
 import { useDecrypt } from "../../store/hooks/useDecrypt";
 import axiosInstance from "../../providers/axiosClient";
@@ -297,77 +296,77 @@ const AgentHome = () => {
     })
 
   }
-  // const handleCall = () => {
-  //   if (ua && !isCalling || !isInCall) {
-  //     setIsCalling(true);
-  //     setInviteNumber(phoneNumber)
-  //     const options = {
-  //       mediaConstraints: { audio: true, video: false },
-  //       sessionDescriptionHandlerOptions: {
-  //         constraints: { audio: true, video: false },
-  //       },
-  //     };
+  const handleCall = () => {
+    if (ua && !isCalling || !isInCall) {
+      setIsCalling(true);
+      setInviteNumber(phoneNumber)
+      const options = {
+        mediaConstraints: { audio: true, video: false },
+        sessionDescriptionHandlerOptions: {
+          constraints: { audio: true, video: false },
+        },
+      };
 
-  //     const destination = `sip:${phoneNumber}@${providerAddress}`;
-  //     const callSession = ua?.call(destination, options);
-  //     const peerConnection = callSession?.connection;
+      const destination = `sip:${phoneNumber}@${providerAddress}`;
+      const callSession = ua?.call(destination, options);
+      const peerConnection = callSession?.connection;
 
-  //     callSession?.on("progress", () => {
-  //       peerConnection?.getReceivers().forEach((receiver) => {
-  //         if (receiver.track.kind === 'audio') {
-  //           if (audioElement.current) {
-  //             const remoteStream = new MediaStream();
-  //             remoteStream.addTrack(receiver.track);
-  //             audioElement.current.srcObject = remoteStream;
-  //             audioElement.current.play();
-  //           }
-  //         }
-  //       });
-  //     });
-  //     callSession?.on("accepted", () => {
-  //       setIsInCall(true)
-  //       const peerConnection = callSession?.connection;
-  //       console.log(peerConnection.getReceivers())
+      callSession?.on("progress", () => {
+        peerConnection?.getReceivers().forEach((receiver) => {
+          if (receiver.track.kind === 'audio') {
+            if (audioElement.current) {
+              const remoteStream = new MediaStream();
+              remoteStream.addTrack(receiver.track);
+              audioElement.current.srcObject = remoteStream;
+              audioElement.current.play();
+            }
+          }
+        });
+      });
+      callSession?.on("accepted", () => {
+        setIsInCall(true)
+        const peerConnection = callSession?.connection;
+        console.log(peerConnection.getReceivers())
 
-  //       peerConnection.getReceivers().forEach((receiver) => {
-  //         if (receiver.track.kind === 'audio') {
-  //           if (audioElement.current) {
-  //             const remoteStream = new MediaStream();
-  //             remoteStream.addTrack(receiver.track);
-  //             audioElement.current.srcObject = remoteStream;
-  //             audioElement.current.play();
-  //           }
-  //         }
-  //       });
+        peerConnection.getReceivers().forEach((receiver) => {
+          if (receiver.track.kind === 'audio') {
+            if (audioElement.current) {
+              const remoteStream = new MediaStream();
+              remoteStream.addTrack(receiver.track);
+              audioElement.current.srcObject = remoteStream;
+              audioElement.current.play();
+            }
+          }
+        });
 
-  //     })
+      })
 
-  // callSession?.on('ended', (data) => {
-  //   const total_second = (new Date(callSession?.end_time).getTime() - new Date(callSession?.start_time).getTime()) / 1000
-  //   const hangUpfrom = !data?.message?.from ? agentAccount.agentId : null
-  //   sendActiveAgent()
-  //   sendCallHistory(callSession?.remote_identity.uri.user,
-  //     callSession.local_identity.uri.user, hangUpfrom, null, callSession.start_time, callSession?.end_time,
-  //     total_second, data.cause, agentData.Campaign.name, callSession?.direction)
-  //   setIsInCall(false);
-  //   setIsCalling(false);
-  //   setInviteNumber("");
-  //   // handlePause(agentAccount?.sipUsername, agentData?.Campaign.name);
-  // });
+      callSession?.on('ended', (data) => {
+        const total_second = (new Date(callSession?.end_time).getTime() - new Date(callSession?.start_time).getTime()) / 1000
+        const hangUpfrom = !data?.message?.from ? agentAccount.agentId : null
+        sendActiveAgent()
+        sendCallHistory(callSession?.remote_identity.uri.user,
+          callSession.local_identity.uri.user, hangUpfrom, null, callSession.start_time, callSession?.end_time,
+          total_second, data.cause, agentData.Campaign.name, callSession?.direction)
+        setIsInCall(false);
+        setIsCalling(false);
+        setInviteNumber("");
+        // handlePause(agentAccount?.sipUsername, agentData?.Campaign.name);
+      });
 
-  // callSession?.on('failed', (data) => {
-  //   const total_second = (new Date(callSession?.end_time).getTime() - new Date(callSession?.start_time).getTime()) / 1000
-  //   const hangUpfrom = !data?.message?.from ? agentAccount.agentId : null
-  //   sendCallHistory(callSession?.remote_identity.uri.user,
-  //     callSession.local_identity.uri.user, hangUpfrom, null, callSession.start_time, callSession?.end_time,
-  //     total_second, data.cause, agentData.Campaign.name, callSession?.direction)
-  //   setIsCalling(false);
-  //   sendActiveAgent()
+      callSession?.on('failed', (data) => {
+        const total_second = (new Date(callSession?.end_time).getTime() - new Date(callSession?.start_time).getTime()) / 1000
+        const hangUpfrom = !data?.message?.from ? agentAccount.agentId : null
+        sendCallHistory(callSession?.remote_identity.uri.user,
+          callSession.local_identity.uri.user, hangUpfrom, null, callSession.start_time, callSession?.end_time,
+          total_second, data.cause, agentData.Campaign.name, callSession?.direction)
+        setIsCalling(false);
+        sendActiveAgent()
 
-  //   setInviteNumber("");
-  // });
-  // }
-  //   };
+        setInviteNumber("");
+      });
+    }
+  };
 
 
   const handlePause = async (agt_number, campaign_name) => {
@@ -401,10 +400,10 @@ const AgentHome = () => {
 
 
   return (
-    <main className="profile-page dark:bg-gray-600 w-full h-max overflow-y-scroll dark:text-white">
+    <main className="profile-page dark:bg-black w-full h-max overflow-y-scroll dark:text-white">
       <audio ref={remoteAudioRef} id="remoteAudio" autoPlay />
       <audio ref={ringtoneRef} id="ringtoneref" autoPlay />
-      <div className="px-6 dark:bg-gray-600 min-h-screen h-max dark:text-white flex rounded-lg">
+      <div className="px-6 dark:bg-black min-h-screen h-max dark:text-white flex rounded-lg">
         <div className="flex flex-col w-full">
           <section className="relative block h-[500px]">
             <div
@@ -417,55 +416,102 @@ const AgentHome = () => {
             </div>
           </section>
           <audio ref={ringtoneRef} controls preload="true" loop src="/ringtone.mp3" className="hidden"></audio>
-          <section className="relative py-16 bg-blueGray-200 dark:bg-gray-600 dark:text-white">
+          <section className="relative py-16 bg-blueGray-200 dark:bg-black dark:text-white">
             <div className="container px-4 mx-auto">
               <div className="relative flex flex-col w-full min-w-0 mb-6 -mt-64 break-words bg-white rounded-lg shadow-xl">
-                <div className="px-6 dark:bg-gray-600 min-h-screen flex h-max dark:text-white py-5 rounded-lg">
-                  <div className="flex justify-center mb-5 w-2/4 flex-wrap">
-                    <div className="flex w-full flex-1 px-4 lg:order-2 dark:bg-gray-600 dark:text-white">
-                      <div className="w-full">
-                        <div className="my-5 flex flex-col justify-center w-full">
-                          <div className="mx-auto mb-3 w-[150px] h-[150px] flex items-center justify-center bg-black rounded-full">
-                            <Avatar className=" text-center align-middle my-auto">
-
-                              <AvatarImage className="shadow-xl rounded-full h-auto border-4 border-green-600  max-w-[150px]" src={`${import.meta.env.VITE_APP_BACKEND_URL}${agentData?.profile}`}
+                <div className="px-6 dark:bg-black min-h-screen flex h-max dark:text-white py-5 rounded-lg">
+                  <div className="flex justify-center w-full max-w-2xl p-4">
+                    <Card className="w-full">
+                      <CardHeader className="relative pb-0">
+                        <div className="flex flex-col items-center">
+                          <div className="relative">
+                            <div className="absolute inset-0 bg-gradient-to-b from-primary/20 to-primary/10 rounded-full blur-xl" />
+                            <Avatar className={`w-32 rounded-full overflow-hidden h-32 border-4 ${accountStatus ? "border-green-500" : "border-red-500"}  flex`}>
+                              <AvatarImage
+                                src={`${import.meta.env.VITE_APP_BACKEND_URL}${agentData?.profile}`}
+                                className="object-cover"
                               />
-                              <AvatarFallback className="w-full text-center bg-black text-4xl">{agentData?.name[0]}</AvatarFallback>
+                              <AvatarFallback className="text-4xl bg-primary text-primary-foreground">
+                                {agentData?.name?.[0]}
+                              </AvatarFallback>
                             </Avatar>
                           </div>
-                          <div className="flex w-full text-center flex-col justify-center">
-                            <div>
-                              <p className="text-2xl font-bold">{agentData?.name}<span className="font-normal ml-2">({agentData?.sipName})</span></p>
+                          <div className="mt-4 text-center space-y-2">
+                            <div className="space-y-1">
+                              <h2 className="text-2xl font-bold tracking-tight">
+                                {agentData?.name}
+                              </h2>
+                              <p className="text-muted-foreground">
+                                ({agentData?.sipName})
+                              </p>
                             </div>
-                            <div className="mt-3">
-                              Sip Status: {accountStatus ? <span
-                                className="inline-block text-muted whitespace-nowrap rounded-full bg-emerald-200 px-[0.65em] pb-[0.25em] pt-[0.35em] text-center align-baseline text-[0.75em] font-bold leading-none text-success-700 dark:bg-emerald-700 dark:text-success-500/80">
-                                online
-                              </span> : <span
-                                className="inline-block whitespace-nowrap rounded-full bg-danger-100 px-[0.65em] pb-[0.25em] pt-[0.35em] text-center align-baseline text-[0.75em] font-bold leading-none text-danger-700 dark:bg-[#2c0f14] dark:text-danger-500 ">
-                                offline
-                              </span>}
-                              <p className="text-sm mt-2">Online Agents: {clientCount}</p>
+                            <div className="flex items-center justify-center gap-2">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm">SIP Status:</span>
+                                {accountStatus ? (
+                                  <Badge variant="default" className="bg-emerald-600 hover:bg-emerald-700">
+                                    Online
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="destructive">
+                                    Offline
+                                  </Badge>
+                                )}
+                              </div>
+                              <Separator orientation="vertical" className="h-4" />
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm">Online Agents:</span>
+                                <Badge variant="outline" className="font-mono">
+                                  {clientCount}
+                                </Badge>
+                              </div>
                             </div>
                           </div>
                         </div>
-                        <div className="mt-5">
-                          <div className="">
-                            <p className="text-lg font-bold text-center">Your Performance</p>
+                      </CardHeader>
+                      <CardContent className="pt-6">
+                        <div className="space-y-4">
+                          <div className="text-center">
+                            <CardTitle className="text-lg font-semibold">
+                              Your Performance
+                            </CardTitle>
                           </div>
-                          <div className="mt-3 w-full flex gap-3 mx-auto justify-center">
-                            <p className="mb-1 font-bold flex flex-col text-center ">{agentData?.outgoing || 0} <span className="font-normal">Outbound</span></p>
-                            <p className="mb-1 font-bold flex flex-col text-center">{agentData?.incoming || 0}<span className="font-normal">Inbound</span></p>
-                            <p className="mb-1 font-bold flex flex-col text-center">{agentData?.totalSeconds || 0} (S)<span className="font-normal">Total Call Time</span></p>
+                          <div className="grid grid-cols-3 gap-4 p-4 bg-muted/50 rounded-lg">
+                            <div className="space-y-1 text-center">
+                              <span className="text-2xl font-bold tracking-tight">
+                                {agentData?.outgoing || 0}
+                              </span>
+                              <p className="text-sm text-muted-foreground">
+                                Outbound
+                              </p>
+                            </div>
+                            <div className="space-y-1 text-center">
+                              <span className="text-2xl font-bold tracking-tight">
+                                {agentData?.incoming || 0}
+                              </span>
+                              <p className="text-sm text-muted-foreground">
+                                Inbound
+                              </p>
+                            </div>
+                            <div className="space-y-1 text-center">
+                              <span className="text-2xl font-bold tracking-tight">
+                                {agentData?.totalSeconds || 0}
+                                <span className="text-sm font-normal ml-1">(s)</span>
+                              </span>
+                              <p className="text-sm text-muted-foreground">
+                                Total Call Time
+                              </p>
+                            </div>
                           </div>
                         </div>
-                        <Crmform />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="md:w-2/4 w-full h-full my-auto p-4 flex flex-col">
+                        <div className="mt-6">
+                          <Crmform />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>                  <div className="md:w-2/4 w-full h-full my-auto p-4 flex flex-col">
 
-                    <WebPhoneComponent ua={ua} providerAddress={providerAddress} />
+                    <WebPhoneComponent ua={ua} providerAddress={providerAddress} accountStatus={accountStatus} />
                     {/* <div className="border-2 rounded-lg p-3 mb-3"> */}
                     {/* <div className=" text-center flex items-center justify-center"> */}
                     {/*   <p className="text-xl font-medium">WebPhone</p> */}
