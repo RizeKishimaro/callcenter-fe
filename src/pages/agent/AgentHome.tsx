@@ -114,12 +114,18 @@ const AgentHome = () => {
     if (prefix) {
 
       const wsSocket = new JsSIP.WebSocketInterface(`${import.meta.env.VITE_APP_WEBSOCKET_HOST}:${import.meta.env.VITE_APP_WEBSOCKET_PORT}/ws`)
-      const configuration: UAConfiguration = {
+      const configuration = {
         uri: `sip:${agentAccount.sipUsername}_${prefix}@${import.meta.env.VITE_APP_SIP_HOST}`,
         user_agent: "NextGenCC",
         sockets: [wsSocket],
         authorization_user: `${agentAccount.sipUsername}_${prefix}`,
         password: agentAccount.sipPassword,
+        trace_sip: true,
+        turn_servers: {
+          urls: "bo.callcenter.com.mm:3478",
+          username: "boadmin",
+          credential: "boadmin"
+        }
       };
 
 
