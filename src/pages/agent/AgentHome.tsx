@@ -121,11 +121,6 @@ const AgentHome = () => {
         authorization_user: `${agentAccount.sipUsername}_${prefix}`,
         password: agentAccount.sipPassword,
         trace_sip: true,
-        turn_servers: {
-          urls: "bo.callcenter.com.mm:3478",
-          username: "boadmin",
-          credential: "boadmin"
-        }
       };
 
 
